@@ -42,5 +42,6 @@ class PostForm(FlaskForm):
     author = StringField("Author")
     content = StringField("Content", validators=[DataRequired()], widget=TextArea())
     slug = StringField("Slug", validators=[DataRequired()])
+    place = StringField("Place", validators=[DataRequired()])
     img = FileField("Фотографии")
     submit = SubmitField('Submit')

@@ -150,12 +150,13 @@ def main():
         if form.validate_on_submit():
             poster = current_user.id
 
-            post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
+            post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data, place=form.place.data,
                          poster_id=poster)
             # Clear The Form
             form.title.data = ''
             form.content.data = ''
             form.slug.data = ''
+            form.place.data = ''
 
             # Add post data to database
             db_sess.add(post)
