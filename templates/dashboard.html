@@ -1,0 +1,77 @@
+{% extends 'base.html'%}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+
+{% endfor %}
+
+    <h2>Dashboard</h2>
+    <br/>
+        <div class="card">
+          <div class="card-header">
+            {{ current_user.nickname }}
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">Info:</h5>
+            <p class="card-text">
+                    <strong>Nickname: </strong>{{current_user.nickname}}<br/>
+                    <strong>Name: </strong>{{current_user.name}}<br/>
+                    <strong>Surname: </strong>{{current_user.surname}}<br/>
+                    <strong>Email: </strong>{{current_user.email}}<br/>
+                    <strong>Age: </strong>{{current_user.age}}<br/>
+                    <strong>Date Joined: </strong>{{current_user.modified_date}}<br/>
+            </p>
+            <a href="{{url_for('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
+
+              <a href="{{ url_for('update', id=current_user.id)}}" class="btn btn-secondary btn-sm">Update profile</a>
+           <a href="{{ url_for('delete', id=current_user.id)}}" class="btn btn-danger btn-sm">DELETE</a>
+          </div>
+        </div>
+
+<br/> <br/>
+
+   <div class="card">
+      <div class="card-header">
+        update Profile
+      </div>
+      <div class="card-body">
+      </div>
+
+       <div class="shadow p-3 mb-5 bg-body rounded">
+    <form action="/dashboard" method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.name.label(
+        class="form-label") }}
+
+        {{ form.name(class="form-control", value=name_to_update.name) }}
+        <br/>
+
+        {{ form.email.label(
+        class="form-label") }}
+        {{ form.email(class="form-control", value=name_to_update.email) }}
+        <br/>
+
+
+        {{ form.nickname.label(
+        class="form-label") }}
+
+        {{ form.nickname(class="form-control", value=name_to_update.name) }}
+        <br/>
+
+        {{ form.submit(class="btn btn-secondary") }}
+    </form>
+
+   </div>
+
+
+
+
+{% endblock%}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{ turbo() }}
+<div class="btn-group" role="group" aria-label="Basic example">
+            <a type="button" class="btn btn-outline-primary" href="/">Пользователи в игре</a>
+            <a type="button" class="btn btn-outline-primary" href="/info">Информация</a>
+</div>
+<h1 align="left">Players in game</h1>
+{%if current_user.is_authenticated%}
+<div class="col-md6 border rounded" align="center" id="load">
+    <table class="table">
+            <thead>
+                <tr class="table-secondary">
+                    <th scope="col">#</th>
+                    <th scope="col">Пользователь</th>
+                    <th scope="col">K/D</th>
+                    <th scope="col">Убийства</th>
+                    <th scope="col">Смерти</th>
+                    <th scope="col">Попадания</th>
+                    <th scope="col">Рикошеты</th>
+                    <th scope="col">Урона нанесено</th>
+                    <th scope="col">Вызвано пожаров</th>
+                </tr>
+            </thead>
+        </table>
+        <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden"></span>
+        </div>
+</div>
+{%else%}
+<table class="table">
+                <thead>
+                <tr class="table-secondary">
+                    <th scope="col" align="center">Статистика матча доступна только авторизованным пользователям</th>
+                </tr>
+                </thead>
+          </table>
+{%endif%}
+{% endblock %}
