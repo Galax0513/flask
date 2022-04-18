@@ -56,7 +56,7 @@ def main():
             else:
                 # flash("Wrong Login or Password - Try Again!")
                 return render_template('login2.html',
-                                       message="Неправильный логин или пароль",
+                                       message="Неправильный логин или пароль!",
                                        form=form)
         return render_template('login2.html', title='Авторизация', form=form)
 
