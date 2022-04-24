@@ -37,12 +37,17 @@
         {{ form.content(class="form-control", rows="10") }}
 
         <br/>
+        {{ form.address.label(
+        class="form-label") }}
+        {{ form.address(class="form-control") }}
+
+        <br/>
                         {{ form.img.label(
         class="form-label") }}
         {{ form.img(class="form-control") }}
 
         <br/>
-        {{ form.submit(class="btn btn-secondary") }}
+        {{ form.submit(class="submit", class="btn btn-secondary") }}
 
 
 

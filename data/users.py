@@ -32,10 +32,6 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
 
-
-
-
-
 '''from datetime import datetime
 import sqlalchemy
 from .db_session import SqlAlchemyBase

@@ -2,27 +2,27 @@ import json
 import threading
 import socket
 from time import sleep
-
+import requests
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from turbo_flask import Turbo
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, TextAreaField, EmailField
 from wtforms.validators import DataRequired, EqualTo, Length
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
 #from settings import SERVER_HOST, SERVER_PORT, SERVER_PORT_WEB
 from data.api import GetPos
-
 from data import db_session
 from data.blog_post import Posts
-from forms.forms import RegisterForm as UserForm, LoginForm, RegisterForm, PostForm
+from forms.forms import RegisterForm as UserForm, LoginForm, RegisterForm, PostForm, SearchForm
 from settings import SERVER_HOST, SERVER_PORT
 from data.stats import Stats
 from data.users import User
+from data.yandex_api_func import coords
 from flask_restful import reqparse, abort, Api, Resource
+
 
 app = Flask(__name__)
 
@@ -43,6 +43,49 @@ turbo = Turbo(app)
 def main():
     db_session.global_init("db/blogs.db")
     db_sess = db_session.create_session()
+
+    @app.errorhandler(401)
+    def login_error(error):
+        return render_template('error.html', error="Недоступно для незарегистрированных пользователей")
+
+    # @app.errorhandler(404)
+    # def login_error(error):
+    #     return render_template('error.html', error="Такой страницы не существует")
+
+    @app.route("/map")
+    @login_required
+    def map():
+        pixels_d = 2.858532
+        pixels_sh = 5.78852867
+        ll = [99.012606, 64.186239]  # координаты России
+        data, data_marks = [], []
+        for object in db_sess.query(Posts).all():
+            try:
+                data_marks.append(f"{object.coords.split(',')[0]},{object.coords.split(',')[1]}" + ',comma')
+                coords = [object.id, [float(el) for el in object.coords.split(',')]]
+                data.append(
+                    [coords[0], [225 + (ll[1] - coords[1][1]) * pixels_sh, 325 - (ll[0] - coords[1][0]) * pixels_d]])
+            except Exception:
+                pass
+        map_request = "http://static-maps.yandex.ru/1.x"
+        response = requests.get(map_request, params={"size": "650,450",
+                                                     'll': f'{ll[0]},{ll[1]}',
+                                                     'spn': '35,35',
+                                                     'l': 'map',
+                                                     'pt': '~'.join(data_marks),
+                                                     'scale': '1',
+                                                     "apikey": "40d1649f-0493-4b70-98ba-98533de7710b"}
+                                )
+        map_file = "static/map/map.png"
+        with open(map_file, "wb") as file:
+            file.write(response.content)
+        print(data)
+        return render_template("map.html", data=data)
+
+    @app.route("/map_new")
+    @login_required
+    def map_new():
+        return render_template("test_map_java.html", posts=db_sess.query(Posts).all())
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -126,21 +169,24 @@ def main():
                 turbo.push(turbo.replace(render_template('loadvg.html', info=inject_load()), 'load'))
                 sleep(0.4)
 
-
     class PasswordForm(FlaskForm):
         email = StringField("What's Your Email", validators=[DataRequired()])
         password_hash = PasswordField("What's Your Password", validators=[DataRequired()])
         submit = SubmitField('Submit')
 
-
-    @app.route('/posts')
+    @app.route('/posts', methods=["GET", "POST"])
     def posts():
-        db_sess = db_session.create_session()
-        # Grab all the posts from the database
-        posts = db_sess.query(Posts).order_by(Posts.date_posted)
-
-        return render_template("posts.html",
-                               posts=posts)
+        posts = db_sess.query(Posts).order_by(Posts.date_posted).all()
+        form = SearchForm()
+        if form.validate_on_submit():
+            posts = db_sess.query(Posts).filter((Posts.title == form.search.data.lower()) |
+                                                Posts.title.like(f"%{form.search.data}%")).all()
+            if posts:
+                return render_template("posts.html",
+                                       posts=posts, form=form)
+            else:
+                flash("По данному запросу постов не найдено")
+        return render_template("posts.html", posts=posts, form=form)
 
     # Add Post Page
     @app.route('/add-post', methods=['GET', 'POST'])
@@ -149,9 +195,12 @@ def main():
 
         if form.validate_on_submit():
             poster = current_user.id
+            global coords
+
+            coords = coords(form.address.data)
 
             post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
-                         poster_id=poster)
+                         poster_id=poster, address=form.address.data, coords=coords)
             # Clear The Form
             form.title.data = ''
             form.content.data = ''
@@ -183,7 +232,7 @@ def main():
             post.title = form.title.data
             post.slug = form.slug.data
             post.content = form.content.data
-            db_sess.add(post)
+            db_sess.merge(post)
             db_sess.commit()
             flash("Post has been updated")
             return redirect(url_for('post', id=post.id))

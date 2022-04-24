@@ -1,6 +1,11 @@
 {% extends 'base.html'%}
 
 {% block content %}
+<script type="text/javascript">
+if (window.location.href.indexOf('reload')==-1) {
+    window.location.replace(window.location.href+'?reload');
+}
+</script>
 
 {% for message in get_flashed_messages() %}
 
@@ -13,12 +18,16 @@
 {% endfor %}
 
 
-<br/>
+<form action="" method="post">
+    <p>{{ form.search(class="form-control")}}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }} <a type="button" class="btn btn-outline-primary" href="/map_new">На карте</a></p>
 
+</form>
+    {% if posts%}
 {% for post in posts %}
 
 <div class="shadow p-3 mb-5 bg-body rounded">
-    <h2 ><a href="{{ url_for('post', id=post.id) }}" >{{post.title }}</a> </h2><br/>
+    <h2 ><a href="{{ url_for('post', id=post.id) }}" >{{post.title}}</a> </h2><br/>
     <small>By: {{ post.poster.nickname }}<br/>
         {{post.date_posted }} | {{post.slug }}</small><br/>
     {{post.content }}
@@ -30,4 +39,9 @@
 
 
 {% endfor %}
+{% else %}
+ <div class="alert alert-primary" role="alert">
+     Посты отсутствуют
+ </div>
+{% endif %}
 {% endblock%}
