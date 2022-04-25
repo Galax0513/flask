@@ -177,8 +177,10 @@ def main():
     @app.route('/posts', methods=["GET", "POST"])
     def posts():
         posts = db_sess.query(Posts).order_by(Posts.date_posted).all()
+
         form = SearchForm()
         if form.validate_on_submit():
+            print('adad')
             posts = db_sess.query(Posts).filter((Posts.title == form.search.data.lower()) |
                                                 Posts.title.like(f"%{form.search.data}%")).all()
             if posts:
@@ -229,13 +231,14 @@ def main():
         post = db_sess.query(Posts).get(id)
         form = PostForm()
         if form.validate_on_submit():
+            print('adad')
             post.title = form.title.data
             post.slug = form.slug.data
             post.content = form.content.data
             db_sess.merge(post)
             db_sess.commit()
             flash("Post has been updated")
-            return redirect(url_for('post', id=post.id))
+            return redirect(url_for('posts', id=post.id))
         form.title.data = post.title
         form.slug.data = post.slug
         form.content.data = post.content

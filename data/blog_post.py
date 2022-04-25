@@ -16,5 +16,6 @@ class Posts(SqlAlchemyBase):
     img = sqlalchemy.Column(sqlalchemy.BLOB)
     address = sqlalchemy.Column(sqlalchemy.String(200))
     coords = sqlalchemy.Column(sqlalchemy.String(100))
+    place = sqlalchemy.Column(sqlalchemy.String())
     # Foreign Key To Link Users
     poster_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
