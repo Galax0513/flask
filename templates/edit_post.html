@@ -15,9 +15,8 @@
 
 <br/>
 <div class="shadow p-3 mb-5 bg-body rounded">
- <form method="POST" action="" enctype="multipart/form-data">
+ <form method="POST" action="">
         {{form.csrf_token}}
-        {{ form.hidden_tag() }}
         {{ form.title.label(
         class="form-label") }}
         {{ form.title(class="form-control") }}
@@ -35,7 +34,7 @@
 
         <br/>
 
-        {{ form.submit(class="btn btn-secondary") }}
+        {{ form.submit(type="submit", class="btn btn-secondary") }}
 
     </form>
 

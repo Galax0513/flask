@@ -16,7 +16,7 @@ from wtforms.widgets import TextArea
 from data.api import GetPos
 from data import db_session
 from data.blog_post import Posts
-from forms.forms import RegisterForm as UserForm, LoginForm, RegisterForm, PostForm, SearchForm
+from forms.forms import RegisterForm as UserForm, LoginForm, RegisterForm, PostForm, SearchForm, EditPostForm
 from settings import SERVER_HOST, SERVER_PORT
 from data.stats import Stats
 from data.users import User
@@ -227,9 +227,8 @@ def main():
 
     @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
     def edit_post(id):
-        db_sess = db_session.create_session()
         post = db_sess.query(Posts).get(id)
-        form = PostForm()
+        form = EditPostForm()
         if form.validate_on_submit():
             print('adad')
             post.title = form.title.data
