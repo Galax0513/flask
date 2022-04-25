@@ -2,6 +2,21 @@
 
 {% block content %}
 
+
+ <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type=text/javascript>
+    $(function() {
+        ${'a#forvard').on('click', function(e) {
+            e.preventDefault()
+            $.getJSON('/forvard',
+                function(data) {
+                // do nothing
+            });
+            return false
+        });
+    });
+</script>
+
 {% for message in get_flashed_messages() %}
 
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -35,14 +50,25 @@
         {{ form.content.label(
         class="form-label") }}
         {{ form.content(class="form-control", rows="10") }}
-
         <br/>
-                        {{ form.img.label(
-        class="form-label") }}
-        {{ form.img(class="form-control") }}
 
-        <br/>
-        {{ form.submit(class="btn btn-secondary") }}
+            <form method="post" action="/" enctype="multipart/form-data">
+        <dl>
+            <p>
+                <input type="file" name="file" class="form-control" autocomplete="off" required>
+            </p>
+        </dl>
+        <p>
+            <br/>
+              <form action="/add_post" method="post">
+     <input type="submit" name="add" value="add">
+  </form>
+                              <form action="/add_post" method="post">
+     <input type='submit' name="submit" value='Всё' />
+  </form>
+        </p>
+    </form>
+
 
 
 

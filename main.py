@@ -1,11 +1,16 @@
 import json
+import os
 import threading
 import socket
+import uuid
+from sqlite3 import Binary
 from time import sleep
 
+from PIL import Image
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from turbo_flask import Turbo
+from werkzeug.utils import secure_filename
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, TextAreaField, EmailField
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_sqlalchemy import SQLAlchemy
@@ -38,6 +43,14 @@ sock.connect((SERVER_HOST, int(SERVER_PORT)))
 api = Api(app)
 api.add_resource(GetPos, '/api/getpos')
 turbo = Turbo(app)
+
+UPLOAD_FOLDER = 'static/uploads/'
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+
 
 
 def main():
@@ -132,6 +145,11 @@ def main():
         password_hash = PasswordField("What's Your Password", validators=[DataRequired()])
         submit = SubmitField('Submit')
 
+    def readimage(filename):
+        fin = open(filename, "rb")
+        img = fin.read()
+        return img
+
 
     @app.route('/posts')
     def posts():
@@ -142,29 +160,41 @@ def main():
         return render_template("posts.html",
                                posts=posts)
 
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    a = []
     # Add Post Page
     @app.route('/add-post', methods=['GET', 'POST'])
     def add_post():
         form = PostForm()
-
         if form.validate_on_submit():
             poster = current_user.id
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                pic_name = str(uuid.uuid1()) + "_" + filename
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+                a.append(pic_name)
 
-            post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
-                         poster_id=poster)
-            # Clear The Form
-            form.title.data = ''
-            form.content.data = ''
-            form.slug.data = ''
+                el = ''.join(a)
 
-            # Add post data to database
-            db_sess.add(post)
-            db_sess.commit()
+                post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
+                             poster_id=poster, img=el)
+                # Clear The Form
+                form.title.data = ''
+                form.content.data = ''
+                form.slug.data = ''
 
-            # Return a Message
-            flash("Blog Post Submitted Successfully!")
+                # Add post data to database
+                db_sess.add(post)
+                db_sess.commit()
 
-        # Redirect to the webpage
+
+                # Return a Message
+                flash("Blog Post Submitted Successfully!")
+
+            # Redirect to the webpage
         return render_template("add_post.html", form=form)
 
 

@@ -1,5 +1,6 @@
 # Create a Form Class
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, EmailField, BooleanField, IntegerField, FileField
 from wtforms.validators import DataRequired, Length, EqualTo, Email
 import email_validator
@@ -42,5 +43,6 @@ class PostForm(FlaskForm):
     author = StringField("Author")
     content = StringField("Content", validators=[DataRequired()], widget=TextArea())
     slug = StringField("Slug", validators=[DataRequired()])
-    img = FileField("Фотографии")
+    picture = FileField('Upload File', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Submit')
+    add = SubmitField('add')
