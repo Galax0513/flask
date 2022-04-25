@@ -1,11 +1,14 @@
 import json
+import os
 import threading
 import socket
+import uuid
 from time import sleep
 import requests
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from turbo_flask import Turbo
+from werkzeug.utils import secure_filename
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, TextAreaField, EmailField
 from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
@@ -38,6 +41,13 @@ sock.connect((SERVER_HOST, int(SERVER_PORT)))
 api = Api(app)
 api.add_resource(GetPos, '/api/getpos')
 turbo = Turbo(app)
+
+UPLOAD_FOLDER = 'static/uploads/'
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 
 
 def main():
@@ -188,32 +198,41 @@ def main():
                 flash("По данному запросу постов не найдено")
         return render_template("posts.html", posts=posts, form=form)
 
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    a = []
     # Add Post Page
     @app.route('/add-post', methods=['GET', 'POST'])
     def add_post():
         form = PostForm()
-
         if form.validate_on_submit():
             poster = current_user.id
-            global coords
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                pic_name = str(uuid.uuid1()) + "_" + filename
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+                a.append(pic_name)
 
-            coords = coords(form.address.data)
+                el = ''.join(a)
 
-            post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
-                         poster_id=poster, address=form.address.data, coords=coords)
-            # Clear The Form
-            form.title.data = ''
-            form.content.data = ''
-            form.slug.data = ''
+                post = Posts(title=form.title.data, content=form.content.data, slug=form.slug.data,
+                             poster_id=poster, img=el)
+                # Clear The Form
+                form.title.data = ''
+                form.content.data = ''
+                form.slug.data = ''
 
-            # Add post data to database
-            db_sess.add(post)
-            db_sess.commit()
+                # Add post data to database
+                db_sess.add(post)
+                db_sess.commit()
 
-            # Return a Message
-            flash("Blog Post Submitted Successfully!")
 
-        # Redirect to the webpage
+                # Return a Message
+                flash("Blog Post Submitted Successfully!")
+
+            # Redirect to the webpage
         return render_template("add_post.html", form=form)
 
 

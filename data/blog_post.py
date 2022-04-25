@@ -13,7 +13,7 @@ class Posts(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.Text)
     date_posted = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.utcnow)
     slug = sqlalchemy.Column(sqlalchemy.String(200))
-    img = sqlalchemy.Column(sqlalchemy.BLOB)
+    img = sqlalchemy.Column(sqlalchemy.String())
     address = sqlalchemy.Column(sqlalchemy.String(200))
     coords = sqlalchemy.Column(sqlalchemy.String(100))
     # Foreign Key To Link Users

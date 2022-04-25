@@ -41,13 +41,21 @@
         class="form-label") }}
         {{ form.address(class="form-control") }}
 
-        <br/>
-                        {{ form.img.label(
-        class="form-label") }}
-        {{ form.img(class="form-control") }}
 
         <br/>
-        {{ form.submit(class="submit", class="btn btn-secondary") }}
+            <form method="post" action="/" enctype="multipart/form-data">
+        <dl>
+            <p>
+                <input type="file" name="file" class="form-control" autocomplete="off" required>
+            </p>
+        </dl>
+        <p>
+            <br/>
+              <form action="/add_post" method="post">
+     <input type="submit" name="add" value="add" class="btn btn-secondary">
+            </form>
+        </p>
+    </form>
 
 
 

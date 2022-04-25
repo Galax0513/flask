@@ -18,7 +18,7 @@ if (window.location.href.indexOf('reload')==-1) {
 {% endfor %}
 
 
-<form action="" method="post">
+<form action="/map_new" method="post">
     <p>{{ form.search(class="form-control")}}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }} <a type="button" class="btn btn-outline-primary" href="/map_new">На карте</a></p>
 
@@ -32,6 +32,8 @@ if (window.location.href.indexOf('reload')==-1) {
         {{post.date_posted }} | {{post.slug }}</small><br/>
     {{post.content }}
     <br/>
+        <br/>
+        <img src="{{ url_for('static', filename='/uploads/{post.img}')}}" width="100px">
     <br/>
     <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
         <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">DELETE</a>
