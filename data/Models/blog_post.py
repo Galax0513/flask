@@ -1,8 +1,7 @@
 from datetime import datetime
 import sqlalchemy
-from sqlalchemy import orm
 
-from .db_session import SqlAlchemyBase
+from data.Sql.db_session import SqlAlchemyBase
 
 
 class Posts(SqlAlchemyBase):
@@ -13,9 +12,15 @@ class Posts(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.Text)
     date_posted = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.utcnow)
     slug = sqlalchemy.Column(sqlalchemy.String(200))
-    img = sqlalchemy.Column(sqlalchemy.BLOB)
+    files = sqlalchemy.Column(sqlalchemy.String())
     address = sqlalchemy.Column(sqlalchemy.String(200))
     coords = sqlalchemy.Column(sqlalchemy.String(100))
     place = sqlalchemy.Column(sqlalchemy.String())
     # Foreign Key To Link Users
     poster_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+
+    def to_dict(self, only=("title", "content", "date_posted", "slug", "address")):
+        data = {}
+        for elem in only:
+            data[elem] = self.__dict__[elem]
+        return data

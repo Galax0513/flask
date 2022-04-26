@@ -2,16 +2,12 @@
 
 {% block content %}
 <h1>Регистрация</h1>
-<script type="text/javascript">
-if (window.location.href.indexOf('reload')==-1) {
-    window.location.replace(window.location.href+'?reload');
-}
-</script>
 <form action="" method="post">
     {{ form.hidden_tag() }}
     {% if message %}
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {% endif %}
     <p>

@@ -3,14 +3,14 @@ import sqlalchemy
 from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from data.db_session import SqlAlchemyBase
+from data.Sql.db_session import SqlAlchemyBase
 from flask_login import UserMixin
 
 
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True, unique=True)
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     age = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
@@ -19,6 +19,7 @@ class User(SqlAlchemyBase, UserMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     game_stat = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     # User can Have Many Posts
     posts = relationship("Posts", backref="poster")  # poster.name
 
@@ -30,6 +31,13 @@ class User(SqlAlchemyBase, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
+
+    def to_dict(self, only=("name", "surname", "age", "email", "nickname")):
+        data = {}
+        for elem in only:
+            data[elem] = self.__dict__[elem]
+        return data
+
 
 
 '''from datetime import datetime

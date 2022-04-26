@@ -2,15 +2,12 @@
 
 {% block content %}
 
-{% for message in get_flashed_messages() %}
-
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+{% if message %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-
-{% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+{% endif %}
 
 
 <br/>
@@ -33,7 +30,11 @@
         {{ form.content(class="form-control", rows="10") }}
 
         <br/>
+        {{ form.images.label(
+        class="form-label") }}
+        {{ form.images(class="form-control") }}
 
+        <br/>
         {{ form.submit(type="submit", class="btn btn-secondary") }}
 
     </form>
