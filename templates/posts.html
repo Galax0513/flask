@@ -16,7 +16,9 @@
 <form action="" method="post">
     {{form.csrf_token}}
     <p>{{ form.search(class="form-control")}}</p>
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }} <a type="button" class="btn btn-outline-primary" href="/map_new">На карте</a></p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}
+    <a type="button" class="btn btn-primary" href="/posts">Очистить поиск</a>
+    <a type="button" class="btn btn-outline-primary" href="/map_new">На карте</a></p>
 
 </form>
     {% if posts%}
