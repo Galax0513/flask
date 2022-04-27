@@ -15,7 +15,7 @@
 <div class="card">
     <div class="card-header">
         <strong><img class="rounded-circle" width="30px" height="30px" src="{% if user.avatar%}/{{user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {{user.nickname}}</strong>
-        {% if current_user.id != user.id %}
+        {% if current_user.id != user.id and current_user.is_authenticated%}
         {% if subscribity == True %}
         <a href="/subscribe/{{user.id}}" class="btn btn-primary btn-sm">Subscribe</a>
         {% else %}
