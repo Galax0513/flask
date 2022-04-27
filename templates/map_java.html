@@ -15,16 +15,15 @@ function init() {
             searchControlProvider: 'yandex#search'
         });
 
-    {% for post in posts %}
-    {% if post.coords %}
+    {% for point in points %}
+
     myMap.geoObjects
-        .add(new ymaps.Placemark([{{post.coords.split(",")[1]}}, {{post.coords.split(",")[0]}}], {
-            balloonContent: '{%if post.poster.nickname%}{{post.poster.nickname}}{% else %}deleted_user{% endif %}: {{post.title}}, <a href="posts/{{post.id}}">Подробнее</a>'
+        .add(new ymaps.Placemark([{{point.split(",")[1]}}, {{point.split(",")[0]}}], {
+            balloonContent: '{% for user in points[point] %}<a class="navbar-brend" href="/dashboard/{{points[point][user][2]}}/0">{{user}}</a>: {{points[point][user][1]}}, <a class="navbar-brend" href="/posts/{{points[point][user][0]}}"=>Подробнее</a><br>{% endfor %}',
         }, {
             preset: 'islands#icon',
             iconColor: '#0095b6'
         }));
-    {% endif %}
     {% endfor %}
 }
 

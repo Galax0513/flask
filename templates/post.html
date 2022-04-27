@@ -13,49 +13,52 @@
 <br/>
 <div class="shadow p-3 mb-5 bg-body rounded">
     <h2>{{post.title }}</h2>
-    <small>By: {%if post.poster.nickname%}
-                                  {{post.poster.nickname}}
-                              {% else %}
-                                  deleted_user
-                              {% endif %}<br/>
+    <small>
+        <strong><img usemap="#workmap" class="rounded-circle" width="30px" height="30px" src="{% if post.poster.avatar%}/{{post.poster.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {%if post.poster.nickname%}{{post.poster.nickname}}{% else %}deleted_user {% endif%}</strong>
+            <map name="workmap">
+                <area shape="circle" coords="15,15,15"
+                      href="/dashboard/{{post.poster_id}}/0">
+            </map><br/>
         {{post.date_posted.date() }} | {{post.slug }}</small><br/>
     {{post.content }}<br>
     {% if current_user.id == post.poster_id %}
     <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
 
     <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">DELETE</a>
-
-    <a href="{{ url_for('posts', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Back to Blog</a>
     {% endif %}
+    <a href="{{ url_for('posts', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Back to Blog</a>
 </div>
 <h2>Galary</h2>
 {% if post.files %}
-<div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
-    <div class="carousel-inner">
-<!--        <div class="carousel-item active">-->
-<!--            <h1>afawfawfawf</h1>-->
-<!--        </div>-->
-        {% for file in post.files.split("|")%}
-        <div class="carousel-item active">
-            {% if file.endswith("mp4") or file.endswith("avi") or file.endswith("mov") %}
-                <video>
-                    <source src="{{ file }}">
-                </video>
-            {% else %}
-                <img class="d-block w-100" src="/{{ file }}" alt="Galary">
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-
-    <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="sr-only">Previous</span>
-    </a>
-    <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="sr-only">Next</span>
-    </a>
+<div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+<!--    <ol class="carousel-indicators">-->
+<!--        {% for i in post.files.split("|")%}-->
+<!--    <li data-target="#carouselExampleIndicators" data-slide-to="{{loop.index0}}" {%if not loop.index%}class="active"{%endif%}></li>-->
+<!--        {% endfor%}-->
+<!--  </ol>-->
+  <div class="carousel-inner">
+      {% for file in post_files%}
+      <div class="carousel-item {% if loop.index == 1%}active{% endif %}">
+          {% if file.endswith("mp4") or file.endswith("avi") or file.endswith("mov") %}
+          <video class="d-block w-100" src="/{{ file }}" controls></video>
+          {% else %}
+          <img class="d-block w-100" src="/{{ file }}" alt="Galary">
+          {% endif %}
+      </div>
+      {% endfor %}
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden"></span>
+  </button>
+</div>
+{% else %}
+<div class="alert alert-primary alert-dismissible fade show" role="alert">
+    There are no photos
 </div>
 {% endif %}
 <br><br>

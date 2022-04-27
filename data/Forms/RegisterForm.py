@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, EmailField, BooleanField, IntegerField, FileField
-from wtforms.validators import DataRequired, Length, EqualTo, Email
+from wtforms import StringField, PasswordField, SubmitField, EmailField, IntegerField, FileField
+from wtforms.validators import DataRequired, Length, Email
 
 
 class RegisterForm(FlaskForm):
@@ -12,4 +12,5 @@ class RegisterForm(FlaskForm):
     nickname = StringField('Nickname', validators=[DataRequired('Введите nickname'), Length(min=3, max=20,
                                                                                             message="Nickname должен быть от 4 до 20 символов")])
     age = IntegerField('Возраст', validators=[DataRequired('Введите возраст')])
+    file = FileField("Добавить аватар")
     submit = SubmitField('Войти')

@@ -2,8 +2,7 @@
 
 {% block content %}
 <div class="col-md6 border rounded" align="center" id="load">
-<img src="https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg" class="img-thumbnail" height="190px" width="190px" align="left">
-
+<img align="left" class="img-thumbnail" width="190px" height="190px" src="{% if user.avatar%}/{{user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}">
 <div class="list-group">
   <button type="button" class="list-group-item list-group-item-action active" aria-current="true">
     <h1>{{user.nickname}}</h1>
@@ -17,7 +16,7 @@
        </thead>
        <tbody>
        <tr>
-         <th rowspan="2">Зарегистрирован {{user.modified_date}}</th>
+         <th rowspan="2">Зарегистрирован {{user.modified_date.date()}}</th>
        </tr>
        </tbody>
     </table>

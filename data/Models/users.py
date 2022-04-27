@@ -1,5 +1,6 @@
 import datetime
 import sqlalchemy
+from sqlalchemy import orm
 from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -22,7 +23,7 @@ class User(SqlAlchemyBase, UserMixin):
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     # User can Have Many Posts
     posts = relationship("Posts", backref="poster")  # poster.name
-
+    subs = relationship('Subs')
     def repr(self):
         return f"{self.name} {self.surname}"
 

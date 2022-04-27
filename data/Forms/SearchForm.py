@@ -8,4 +8,4 @@ class SearchForm(FlaskForm):
         "Поиск",
         validators=[DataRequired()]
     )
-    submit = SubmitField("Поиск")
+    submit = SubmitField("Search")

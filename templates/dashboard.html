@@ -8,29 +8,39 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 {% endif %}
-
+{% if current_user.id == user.id %}
 <h2>Your profile</h2>
+{% endif %}
 <br/>
 <div class="card">
     <div class="card-header">
-        {{ current_user.nickname }}
+        <strong><img class="rounded-circle" width="30px" height="30px" src="{% if user.avatar%}/{{user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {{user.nickname}}</strong>
+        {% if current_user.id != user.id %}
+        {% if subscribity == True %}
+        <a href="/subscribe/{{user.id}}" class="btn btn-primary btn-sm">Subscribe</a>
+        {% else %}
+        <a href="/unsubscribe/{{user.id}}" class="btn btn-primary btn-sm">Unsubscribe</a>
+        {% endif %}
+        {% endif %}
     </div>
     <div class="card-body">
         <h5 class="card-title">Info:</h5>
         <p class="card-text">
-            <strong>Nickname: </strong>{{current_user.nickname}}<br/>
-            <strong>Name: </strong>{{current_user.name}}<br/>
-            <strong>Surname: </strong>{{current_user.surname}}<br/>
-            <strong>Email: </strong>{{current_user.email}}<br/>
-            <strong>Age: </strong>{{current_user.age}}<br/>
-            <strong>Date Joined: </strong>{{current_user.modified_date.date()}}<br/>
+            <strong>Nickname: </strong>{{user.nickname}}<br/>
+            <strong>Name: </strong>{{user.name}}<br/>
+            <strong>Surname: </strong>{{user.surname}}<br/>
+            <strong>Email: </strong>{{user.email}}<br/>
+            <strong>Age: </strong>{{user.age}}<br/>
+            <strong>Date Joined: </strong>{{user.modified_date.date()}}<br/>
             <a href="/player/{{current_user.id}}"><strong>Game profile </strong></a><br/>
         </p>
+        {% if current_user.id == user.id %}
         <a href="{{url_for('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
 
         <a href="{{ url_for('update', id=current_user.id)}}" class="btn btn-secondary btn-sm">Update profile</a>
 <!--        <a href="{{ url_for('delete', id=current_user.id)}}" class="btn btn-danger btn-sm">DELETE</a>-->
-        <a href="{{ url_for('dashboard', delete_user=1)}}" class="btn btn-danger btn-sm">DELETE</a>
+        <a href="{{ url_for('dashboard', delete_user=1, user_id=current_user.id)}}" class="btn btn-danger btn-sm">DELETE</a>
+        {% endif %}
         {% if form2 %}
         <form action="" method="post">
             {{ form.hidden_tag() }}
@@ -60,46 +70,47 @@
 </div>
 
 <br/> <br/>
-<div class="card">
+{% if current_user.id == user.id %}
+<div class="card" >
     <div class="card-header">
         update Profile
     </div>
     <div class="shadow p-3 mb-5 bg-body rounded">
-        <form action="" method="POST">
+        <form action="" method="POST" enctype="multipart/form-data">
             {{ form.csrf_token }}
             {{ form.hidden_tag() }}
 
             {{ form.name.label(
             class="form-label") }}
 
-            {{ form.name(class="form-control", value=name_to_update.name) }}
+            {{ form.name(class="form-control", value=user.name) }}
             <br/>
 
             {{ form.surname.label(
             class="form-label") }}
 
-            {{ form.surname(class="form-control", value=name_to_update.name) }}
+            {{ form.surname(class="form-control", value=user.surname) }}
             <br/>
 
             {{ form.email.label(
             class="form-label") }}
-            {{ form.email(class="form-control", value=name_to_update.email) }}
+            {{ form.email(class="form-control", value=user.email) }}
             <br/>
 
 
             {{ form.nickname.label(
             class="form-label") }}
 
-            {{ form.nickname(class="form-control", value=name_to_update.name) }}
+            {{ form.nickname(class="form-control", value=user.nickname) }}
+            <br/>
+            {{ form.file.label(class="form-label") }}
+            {{ form.file(type="file", class="form-control") }}
             <br/>
 
             {{ form.submit(type="submit",class="btn btn-secondary") }}
         </form>
     </div>
 </div>
-
-
-
-
+{% endif %}
 
 {% endblock%}

@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>Регистрация</h1>
-<form action="" method="post">
+<form action="" method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     {% if message %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -72,6 +72,10 @@
                 {{ error }}
             </p>
         {% endfor %}
+    </p>
+    <p>{{ form.file.label(
+        class="form-label") }}
+        {{ form.file(type="file", class="form-control") }}
     </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 </form>

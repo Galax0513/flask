@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import threading
 import socket
 from time import sleep
@@ -8,6 +9,8 @@ from flask import Flask, render_template, flash, request, redirect, url_for
 from turbo_flask import Turbo
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from data.Models.subscribers import Subs
 from settings import SERVER_HOST, SERVER_PORT, SERVER_PORT_WEB
 from data.api.api import GetPos, PostsResource, PostsListResource, UsersListResource, UsersResource, StatsResource, \
     StatsListResource
@@ -29,7 +32,9 @@ from flask_restful import Api
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config["UPLOAD_FOLDER"] = r"static/posts_files/"
+app.config["UPLOAD_FOLDER_AVATAR"] = r"static/avatars/"
 app.config["ALLOWED_FILE_EXTENSIONS"] = ["png", "jpg", "jpeg", "gif", "mp4", "avi", "mov"]
+app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"] = ["png", "jpg", "jpeg", "gif"]
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -92,7 +97,17 @@ def map():
 @app.route("/map_new")
 @login_required
 def map_new():
-    return render_template("test_map_java.html", posts=db_sess.query(Posts).all(), size=['100%', "600px"],
+    points = {}
+    for post in db_sess.query(Posts).all():
+        if post.coords:
+            nickname = 'deleted_user'
+            if post.poster.nickname:
+                nickname = post.poster.nickname
+            if post.coords in points:
+                points[post.coords][nickname] = [post.id, post.title, post.poster_id]
+            else:
+                points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
+    return render_template("test_map_java.html", points=points, size=['100%', "600px"],
                            zoom=2, center=[55.76, 37.64])
 
 
@@ -104,7 +119,7 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             # flash("Login Succesfull!")
-            return redirect(url_for('dashboard', delete_user=0))
+            return redirect(url_for('dashboard', delete_user=0, user_id=current_user.id))
         else:
             # flash("Wrong Login or Password - Try Again!")
             return render_template('login2.html',
@@ -120,44 +135,62 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/dashboard/<int:delete_user>', methods=['GET', 'POST'])
-@login_required
-def dashboard(delete_user):
+@app.route('/dashboard/<int:user_id>/<int:delete_user>', methods=['GET', 'POST'])
+def dashboard(delete_user, user_id):
     form1 = UpdateUserForm()
     form2 = DeleteProfileForm()
-    id = current_user.id
-    name_to_update = db_sess.query(User).get(id)
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    subscribity = True
+    for sub in user.subs:
+        if sub.subscriber == current_user.id:
+            subscribity = False
     # добавляем с формы в ьазу данных
-    if form1.validate_on_submit():
-        name_to_update.name = form1.name.data
-        name_to_update.email = form1.email.data
-        name_to_update.nickname = form1.nickname.data
-        name_to_update.surname = form1.surname.data
-        try:
-            db_sess.commit()
-            # flash("User Updated")
-            return render_template("dashboard.html", form=form1,
-                                   name_to_update=name_to_update, message="User Updated")
-        except:
-            flash("Error! Looks like there was a problem... Try again!")
-            return render_template("dashboard.html", form=form1,
-                                   name_to_update=name_to_update, message="Error! Looks like there was a problem... Try again!")
-    elif user and form2.validate_on_submit():
-        if form2.password.data == form2.password_again.data:
-            return redirect(f"/delete/{current_user.id}")
+    if user:
+        if form1.validate_on_submit():
+            if current_user.id == user.id:
+                file = form1.file.data
+                if file:
+                    if file.filename.split(".")[-1] not in app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"]:
+                        return render_template(
+                            "dashboard.html",
+                            message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"])}',
+                            form=form1, user=user, subscribity=subscribity)
+                    file_name = f'{app.config["UPLOAD_FOLDER_AVATAR"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}.{file.filename.split(".")[-1]}'
+                    file.save(file_name)
+                    user.avatar = file_name
+                user.name = form1.name.data
+                user.email = form1.email.data
+                user.nickname = form1.nickname.data
+                user.surname = form1.surname.data
+                try:
+                    db_sess.commit()
+                    # flash("User Updated")
+                    return render_template("dashboard.html", form=form1,
+                                           user=user, message="User Updated", subscribity=subscribity)
+                except:
+                    # flash("Error! Looks like there was a problem... Try again!")
+                    return render_template("dashboard.html", form=form1,
+                                           user=user,
+                                           message="Error! Looks like there was a problem... Try again!",
+                                           subscribity=subscribity)
+            else:
+                # flash("You dumb beach!")
+                return render_template("error.html", error="you are not this user")
+        elif user and form2.validate_on_submit():
+            if form2.password.data == form2.password_again.data:
+                return redirect(f"/delete/{current_user.id}")
+            else:
+                # flash("Пароли не совпадают")
+                return render_template("dashboard.html", form=form1, form2=form2,
+                                       user=user,
+                                       message="Пароли не совпадают", subscribity=subscribity)
         else:
-            # flash("Пароли не совпадают")
-            return render_template("dashboard.html", form=form1, form2=form2,
-                                   name_to_update=name_to_update,
-                                   message="Пароли не совпадают")
-    else:
-        if delete_user:
+            if delete_user:
+                return render_template("dashboard.html", form=form1,
+                                       user=user, form2=form2, subscribity=subscribity)
             return render_template("dashboard.html", form=form1,
-                                   name_to_update=name_to_update,
-                                   id=id, form2=form2)
-        return render_template("dashboard.html", form=form1,
-                               name_to_update=name_to_update,
-                               id=id)
+                                   user=user, subscribity=subscribity)
+    return render_template("error.html", error="This user do not exist")
 
 
 @login_manager.user_loader
@@ -195,6 +228,29 @@ def update_load():
         while True:
             turbo.push(turbo.replace(render_template('loadvg.html', info=inject_load()), 'load'))
             sleep(0.2)
+
+
+@app.route("/users", methods=['GET', 'POST'])
+def users():
+    users = db_sess.query(User).order_by(User.modified_date).all()
+    form = SearchForm()
+    subscribity = {}
+    for user in users:
+        subscribity[user.id] = True
+        for sub in user.subs:
+            if sub.subscriber == current_user.id:
+                subscribity[user.id] = False
+                break
+    if form.validate_on_submit():
+        users = db_sess.query(User).filter((User.nickname == form.search.data.lower()) |
+                                            User.nickname.like(f"%{form.search.data}%")).all()
+        if users:
+            return render_template("users.html",
+                                   users=users, form=form, subscribity=subscribity)
+        else:
+            pass
+            # flash("По данному запросу постов не найдено")
+    return render_template("users.html", users=users, form=form, subscribity=subscribity)
 
 
 @app.route('/posts', methods=["GET", "POST"])
@@ -239,7 +295,7 @@ def add_post():
                         message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS"])}',
                         form=form
                     )
-                file_name = f'{app.config["UPLOAD_FOLDER"]}{datetime.datetime.now().date()}_{current_user.id}.{file.filename.split(".")[-1]}'
+                file_name = f'{app.config["UPLOAD_FOLDER"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}_{current_user.id}.{file.filename.split(".")[-1]}'
                 file_names.append(file_name)
                 file.save(file_name)
         post.files = "|".join(file_names)
@@ -262,8 +318,20 @@ def post(id):
     post = db_sess.query(Posts).get(id)
     if post.coords:
         coords = [float(coord) for coord in post.coords.split(',')][-1::-1]
-        print(coords)
-    return render_template('post.html', post=post, posts=[post], center=coords, size=["100%", "400px"], zoom=8)
+    post_files = []
+    for file in post.files.split("|"):
+        if os.path.exists(file):
+            post_files.append(file)
+        else:
+            post_files.append(app.config["UPLOAD_FOLDER"] + "image_not_found.png")
+    points = {}
+    if post.coords:
+        nickname = 'deleted_user'
+        if post.poster and post.poster.nickname:
+            nickname = post.poster.nickname
+
+        points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
+    return render_template('post.html', post=post, points=points, center=coords, size=["100%", "400px"], zoom=8, post_files=post_files)
 
 
 @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
@@ -272,16 +340,16 @@ def edit_post(id):
     form = EditPostForm()
     if form.validate_on_submit():
         file_names = []
-        print(form.images)
-        for file in form.images.data:
+        print(form.files.data)
+        for file in form.files.data:
             if file:
                 if file.filename.split(".")[-1] not in app.config["ALLOWED_FILE_EXTENSIONS"]:
                     return render_template(
-                        "add_post.html",
+                        "edit_post.html",
                         message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS"])}',
                         form=form
                     )
-                file_name = f'{app.config["UPLOAD_FOLDER"]}{datetime.datetime.now().date()}_{current_user.id}.{file.filename.split(".")[-1]}'
+                file_name = f'{app.config["UPLOAD_FOLDER"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}_{current_user.id}.{file.filename.split(".")[-1]}'
                 file_names.append(file_name)
                 file.save(file_name)
         if post.files:
@@ -335,6 +403,8 @@ def delete(id):
         try:
             db_sess.delete(user_to_delete)
             db_sess.delete(stat_to_delete)
+            for sub in db_sess.query(Subs).filter(Subs.user == id| Subs.subscriber == id).all():
+                db_sess.delete(sub)
             db_sess.commit()
             # flash("User Deleted")
             return redirect("/register")
@@ -345,6 +415,36 @@ def delete(id):
         return render_template("error.html", error="You can't do this")
 
 
+@app.route('/unsubscribe/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def unsubscribe(user_id):
+    if user_id == current_user.id:
+        return render_template("error.html", error="You can't unsubscribe to yourself")
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    sub_to_delete = db_sess.query(Subs).filter(Subs.user == user.id, Subs.subscriber == current_user.id).first()
+    if sub_to_delete:
+        db_sess.delete(sub_to_delete)
+        db_sess.commit()
+        return redirect("/users")
+    else:
+        return render_template("error.html", error="You are not subscribed to this user")
+
+
+@app.route('/subscribe/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def subscribe(user_id):
+    if user_id == current_user.id:
+        return render_template("error.html", error="You can't subscribe to yourself")
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if not db_sess.query(Subs).filter(Subs.user == user.id, Subs.subscriber == current_user.id).first():
+        sub = Subs(user=user.id, subscriber=current_user.id)
+        db_sess.add(sub)
+        db_sess.commit()
+        return redirect("/users")
+    else:
+        return render_template("error.html", error="You have already subscribed to this user")
+
+
 # Update Database Record
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
 def update(id):
@@ -352,48 +452,35 @@ def update(id):
     name_to_update = db_sess.query(User).get(id)
 
     if form.validate_on_submit():
-        name_to_update.name = form.name.data
-        name_to_update.email = form.email.data
-        name_to_update.nickname = form.nickname.data
-        name_to_update.surname = form.surname.data
-        try:
-            db_sess.commit()
-            # flash("User Updated")
-            return render_template("update.html", form=form,
-                                   name_to_update=name_to_update, message="User Updated")
-        except:
-            # flash("Error! Looks like there was a problem... Try again!")
-            return render_template("update.html", form=form,
-                                   name_to_update=name_to_update, message="Error! Looks like there was a problem... Try again!")
+        if current_user.id == name_to_update.id:
+            name_to_update.name = form.name.data
+            name_to_update.email = form.email.data
+            name_to_update.nickname = form.nickname.data
+            name_to_update.surname = form.surname.data
+            file = form.file.data
+            if file:
+                if file.filename.split(".")[-1] not in app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"]:
+                    return render_template(
+                        "update.html",
+                        message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"])}',
+                        form=form, name_to_update=name_to_update)
+                file_name = f'{app.config["UPLOAD_FOLDER_AVATAR"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}.{file.filename.split(".")[-1]}'
+                file.save(file_name)
+                name_to_update.avatar = file_name
+            try:
+                db_sess.commit()
+                # flash("User Updated")
+                return render_template("update.html", form=form,
+                                       name_to_update=name_to_update, message="User Updated")
+            except:
+                # flash("Error! Looks like there was a problem... Try again!")
+                return render_template("update.html", form=form,
+                                       name_to_update=name_to_update, message="Error! Looks like there was a problem... Try again!")
+        else:
+            # flash("You dumb beach!")
+            return render_template("error.html", error="you are not this user")
     return render_template("update.html", form=form,
-                               name_to_update=name_to_update,
-                               id=id)
-
-
-# @app.route('/user/add', methods=['GET', 'POST'])
-# def add_user():
-#     name = None
-#     form = UserForm()
-#     if form.validate_on_submit():
-#         user = db_sess.query(User).filter_by(email=form.email.data).first()
-#         if user is None:
-#             # Hash the password!
-#             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
-#             user = User(name=form.name.data, email=form.email.data,
-#                         password_hash=hashed_pw, nickname=form.nickname.data)
-#             db_sess.add(user)
-#             stat = Stats(player_mail=form.email.data, kills=0, deaths=0, damage=0, hits=0, rik=0, fires=0)
-#             db_sess.add(stat)
-#             db_sess.commit()
-#         name = form.name.data
-#         form.name.data = ''
-#         form.nickname.data = ''
-#         form.email.data = ''
-#         form.password_hash.data = ''
-#         flash("User Added Successfully")
-#     our_users = db_sess.query(User).order_by(User.date_added)
-#     return render_template("add_user.html", form=form, name=name,
-#                            our_users=our_users)
+                               name_to_update=name_to_update,id=id)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -412,12 +499,25 @@ def reqister():
             # flash("Никнейм уже занят")
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Никнейм уже занят")
+
+        file = form.file.data
+        file_name = ''
+        if file:
+            if file.filename.split(".")[-1] not in app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"]:
+                return render_template(
+                    "add_post.html",
+                    message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"])}',
+                    form=form
+                )
+            file_name = f'{app.config["UPLOAD_FOLDER_AVATAR"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}.{file.filename.split(".")[-1]}'
+            file.save(file_name)
         user = User(
             name=form.name.data,
             surname=form.surname.data,
             age=int(form.age.data),
             email=form.email.data,
-            nickname=form.nickname.data)
+            nickname=form.nickname.data,
+            avatar=file_name)
         stat = Stats(player_mail=form.email.data, kills=0, deaths=0, damage=0, hits=0, rik=0, fires=0)
         user.set_password(form.password.data)
         db_sess.add(user)
@@ -460,38 +560,6 @@ def page_not_found(e):
 @app.errorhandler(500)
 def page_not_found(e):
     return render_template("500.html"), 500
-
-
-# Create Password Test Page
-# @app.route('/test_pw', methods=['GET', 'POST'])
-# def test_pw():
-#     email = None
-#     password = None
-#     pw_to_check = None
-#     passed = None
-#     form = PasswordForm()
-#     db_sess = db_session.create_session()
-#     # validate Form
-#     if form.validate_on_submit():
-#         email = form.email.data
-#         password = form.password_hash.data
-#         # Clear the form
-#         form.email.data = ''
-#         form.password_hash.data = ''
-#
-#         # Lookup User By Email Address
-#         pw_to_check = db_sess.query(User).filter_by(email=email).first()
-#
-#         # Check Hashed Password
-#         passed = check_password_hash(pw_to_check.password_hash, password)
-#
-#         # flash("Form Submitted Successfully")
-#     return render_template("test_pw.html",
-#                            email=email,
-#                            password=password,
-#                            pw_to_check=pw_to_check,
-#                            passed=passed,
-#                            form=form)
 
 
 def main():

@@ -12,8 +12,9 @@
 
 <br/>
 <div class="shadow p-3 mb-5 bg-body rounded">
- <form method="POST" action="">
-        {{form.csrf_token}}
+ <form method="POST" action="" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        {{form.hidden_tag()}}
         {{ form.title.label(
         class="form-label") }}
         {{ form.title(class="form-control") }}
@@ -30,9 +31,9 @@
         {{ form.content(class="form-control", rows="10") }}
 
         <br/>
-        {{ form.images.label(
+        {{ form.files.label(
         class="form-label") }}
-        {{ form.images(class="form-control") }}
+        {{ form.files(type="file", class="form-control") }}
 
         <br/>
         {{ form.submit(type="submit", class="btn btn-secondary") }}

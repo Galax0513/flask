@@ -9,7 +9,7 @@
         {% if current_user.is_authenticated %}
             <li class="nav-item">
                 <a class="nav-link  active" href="{{
-                url_for('dashboard', delete_user=0)}}">{{ current_user.nickname }}</a>
+                url_for('dashboard', delete_user=0, user_id=current_user.id)}}">{{ current_user.nickname }}</a>
             </li>
 
             <li class="nav-item">
@@ -27,7 +27,9 @@
               url_for('reqister')}}">Register</a>
             </li>
         {% endif %}
-
+          <li class="nav-item">
+              <a class="nav-link" href="/users">Users</a>
+          </li>
          <li class="nav-item">
           <a class="nav-link" href="{{
           url_for('add_post')}}">Add Blog Post</a>
@@ -37,7 +39,10 @@
           <a class="nav-link" href="{{
           url_for('posts')}}">Posts</a>
         </li>
-
+           <li class="nav-item">
+          <a class="nav-link" href="{{
+          url_for('map_new')}}">Posts on map</a>
+        </li>
 
                 <li class="nav-item">
           <a class="nav-link" href="{{
