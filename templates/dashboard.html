@@ -32,7 +32,7 @@
             <strong>Email: </strong>{{user.email}}<br/>
             <strong>Age: </strong>{{user.age}}<br/>
             <strong>Date Joined: </strong>{{user.modified_date.date()}}<br/>
-            <a href="/player/{{current_user.id}}"><strong>Game profile </strong></a><br/>
+            <a href="/player/{{user.id}}"><strong>Game profile </strong></a><br/>
         </p>
         {% if current_user.id == user.id %}
         <a href="{{url_for('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
@@ -76,8 +76,7 @@
         update Profile
     </div>
     <div class="shadow p-3 mb-5 bg-body rounded">
-        <form action="" method="POST" enctype="multipart/form-data">
-            {{ form.csrf_token }}
+        <form action="" method="post" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
 
             {{ form.name.label(
@@ -97,12 +96,6 @@
             {{ form.email(class="form-control", value=user.email) }}
             <br/>
 
-
-            {{ form.nickname.label(
-            class="form-label") }}
-
-            {{ form.nickname(class="form-control", value=user.nickname) }}
-            <br/>
             {{ form.file.label(class="form-label") }}
             {{ form.file(type="file", class="form-control") }}
             <br/>

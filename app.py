@@ -4,23 +4,22 @@ import os
 import threading
 import socket
 from time import sleep
+
 import requests
-from flask import Flask, render_template, flash, request, redirect, url_for
+from flask import Flask, render_template, redirect, url_for
 from turbo_flask import Turbo
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from data.Models.subscribers import Subs
-from settings import SERVER_HOST, SERVER_PORT, SERVER_PORT_WEB
-from data.api.api import GetPos, PostsResource, PostsListResource, UsersListResource, UsersResource, StatsResource, \
-    StatsListResource
+from settings import SERVER_PORT_WEB
+from data.api.api import GetPos, PostsResource, PostsListResource, UsersListResource, StatsResource, \
+    StatsListResource, UsersResource
 from data.Sql import db_session
 from data.Models.blog_post import Posts
 from data.Forms.SearchForm import SearchForm
 from data.Forms.EditPostForm import EditPostForm
 from data.Forms.PostForm import PostForm
 from data.Forms.LoginForm import LoginForm
-from data.Forms.PasswordForm import PasswordForm
 from data.Forms.RegisterForm import RegisterForm
 from data.Forms.DeleteProfileForm import DeleteProfileForm
 from data.Forms.UpdateUserForm import UpdateUserForm
@@ -38,7 +37,12 @@ app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"] = ["png", "jpg", "jpeg", "gif"]
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'error_login'
+
+
+def ret_login_manager():
+    return login_manager
+
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -61,6 +65,11 @@ db_sess = db_session.create_session()
 @app.errorhandler(401)
 def login_error(error):
     return render_template('error.html', error="Недоступно для незарегистрированных пользователей")
+
+
+@app.route("/need_to_login")
+def error_login():
+    return render_template('error.html', error=f"Must Be Logged In...")
 
 
 @app.route("/map")
@@ -101,7 +110,7 @@ def map_new():
     for post in db_sess.query(Posts).all():
         if post.coords:
             nickname = 'deleted_user'
-            if post.poster.nickname:
+            if post.poster and post.poster.nickname:
                 nickname = post.poster.nickname
             if post.coords in points:
                 points[post.coords][nickname] = [post.id, post.title, post.poster_id]
@@ -135,7 +144,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/dashboard/<int:user_id>/<int:delete_user>', methods=['GET', 'POST'])
+@app.route('/dashboard/<int:user_id>/<int:delete_user>', methods=['GET', 'POST', "PUT"])
 def dashboard(delete_user, user_id):
     form1 = UpdateUserForm()
     form2 = DeleteProfileForm()
@@ -160,7 +169,6 @@ def dashboard(delete_user, user_id):
                     user.avatar = file_name
                 user.name = form1.name.data
                 user.email = form1.email.data
-                user.nickname = form1.nickname.data
                 user.surname = form1.surname.data
                 try:
                     db_sess.commit()
@@ -230,48 +238,67 @@ def update_load():
             sleep(0.2)
 
 
-@app.route("/users", methods=['GET', 'POST'])
-def users():
-    users = db_sess.query(User).order_by(User.modified_date).all()
+@app.route("/users/<int:cond_sub>", methods=['GET', 'POST'])
+def users(cond_sub):
+    subs = [user.id for user in db_sess.query(User).order_by(User.modified_date).all()]
+    if cond_sub:
+        subs = []
+        for user in db_sess.query(User).all():
+            for sub in user.subs:
+                if sub.subscriber == current_user.id:
+                    subs.append(sub.user)
+    users = db_sess.query(User).filter(User.id.in_(subs)).order_by(User.modified_date).all()
     form = SearchForm()
     subscribity = {}
     for user in users:
         subscribity[user.id] = True
         for sub in user.subs:
-            if sub.subscriber == current_user.id:
+            if not current_user.is_authenticated or sub.subscriber == current_user.id:
                 subscribity[user.id] = False
                 break
     if form.validate_on_submit():
-        users = db_sess.query(User).filter((User.nickname == form.search.data.lower()) |
-                                            User.nickname.like(f"%{form.search.data}%")).all()
+        users = db_sess.query(User).filter(((User.nickname == form.search.data.lower()) |
+                                            User.nickname.like(f"%{form.search.data}%") & User.id.in_(subs))).all()
         if users:
             return render_template("users.html",
-                                   users=users, form=form, subscribity=subscribity)
+                                   users=users, form=form, subscribity=subscribity, cond_sub=cond_sub)
         else:
             pass
             # flash("По данному запросу постов не найдено")
-    return render_template("users.html", users=users, form=form, subscribity=subscribity)
+    return render_template("users.html", users=users, form=form, subscribity=subscribity, cond_sub=cond_sub)
 
 
-@app.route('/posts', methods=["GET", "POST"])
-def posts():
+@app.route('/posts/<int:cond_sub>', methods=["GET", "POST"])
+def posts(cond_sub):
     posts = db_sess.query(Posts).order_by(Posts.date_posted).all()
+    subs = []
+    if cond_sub:
+        for user in db_sess.query(User).all():
+            for sub in user.subs:
+                if sub.subscriber == current_user.id:
+                    subs.append(sub.user)
+
+        posts = db_sess.query(Posts).filter(Posts.poster_id.in_(subs)).order_by(Posts.date_posted).all()
 
     form = SearchForm()
     if form.validate_on_submit():
         posts = db_sess.query(Posts).filter((Posts.title == form.search.data.lower()) |
                                             Posts.title.like(f"%{form.search.data}%")).all()
+        if cond_sub:
+            posts = db_sess.query(Posts).filter(((Posts.title == form.search.data.lower()) |
+                                 Posts.title.like(f"%{form.search.data}%")) & Posts.poster_id.in_(subs)).all()
         if posts:
             return render_template("posts.html",
-                                   posts=posts, form=form)
+                                   posts=posts, form=form, cond_sub=cond_sub)
         else:
             pass
             # flash("По данному запросу постов не найдено")
-    return render_template("posts.html", posts=posts, form=form)
+    return render_template("posts.html", posts=posts, form=form, cond_sub=cond_sub)
 
 
 # Add Post Page
 @app.route('/add-post', methods=['GET', 'POST'])
+@login_required
 def add_post():
     form = PostForm()
 
@@ -313,7 +340,7 @@ def add_post():
 
 
 # возвращает обратно к посту
-@app.route('/posts/<int:id>')
+@app.route('/post/<int:id>')
 def post(id):
     post = db_sess.query(Posts).get(id)
     if post.coords:
@@ -403,8 +430,8 @@ def delete(id):
         try:
             db_sess.delete(user_to_delete)
             db_sess.delete(stat_to_delete)
-            for sub in db_sess.query(Subs).filter(Subs.user == id| Subs.subscriber == id).all():
-                db_sess.delete(sub)
+            # for sub in db_sess.query(Subs).filter(Subs.user == id| Subs.subscriber == id).all():
+            #     db_sess.delete(sub)
             db_sess.commit()
             # flash("User Deleted")
             return redirect("/register")
@@ -425,7 +452,7 @@ def unsubscribe(user_id):
     if sub_to_delete:
         db_sess.delete(sub_to_delete)
         db_sess.commit()
-        return redirect("/users")
+        return redirect("/users/1")
     else:
         return render_template("error.html", error="You are not subscribed to this user")
 
@@ -440,7 +467,7 @@ def subscribe(user_id):
         sub = Subs(user=user.id, subscriber=current_user.id)
         db_sess.add(sub)
         db_sess.commit()
-        return redirect("/users")
+        return redirect("/users/1")
     else:
         return render_template("error.html", error="You have already subscribed to this user")
 
@@ -455,7 +482,6 @@ def update(id):
         if current_user.id == name_to_update.id:
             name_to_update.name = form.name.data
             name_to_update.email = form.email.data
-            name_to_update.nickname = form.nickname.data
             name_to_update.surname = form.surname.data
             file = form.file.data
             if file:

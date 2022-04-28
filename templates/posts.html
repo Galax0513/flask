@@ -13,12 +13,17 @@
     {{form.csrf_token}}
     <p>{{ form.search(class="form-control")}}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}
-    <a type="button" class="btn btn-primary" href="/posts">Clear</a>
+    <a type="button" class="btn btn-primary" href="/posts/0">Clear</a>
+        <a type="button" class="btn btn-secondary" href="/posts/1">Subscriptions only</a>
     <a type="button" class="btn btn-outline-primary" href="/map_new">On map</a></p>
+
 
 </form>
 <div id="search">
-    {% if posts%}
+    {% if cond_sub %}
+    <h1>Subscriptions</h1>
+    {% endif %}
+    {% if posts %}
     {% for post in posts %}
     <div class="shadow p-3 mb-5 bg-body rounded">
         <h2><a href="{{ url_for('post', id=post.id) }}">{{post.title}}</a></h2>

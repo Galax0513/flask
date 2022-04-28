@@ -13,11 +13,17 @@
     {{form.csrf_token}}
     <p>{{ form.search(class="form-control")}}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}
-    <a type="button" class="btn btn-primary" href="/users">Clear</a>
+    <a type="button" class="btn btn-primary" href="/users/0">Clear</a>
+    {% if current_user.is_authenticated %}
+        <a type="button" class="btn btn-secondary" href="/users/1">Subscriptions only</a>
+    {% endif %}
 
 </form>
 
 <div>
+    {% if cond_sub %}
+    <h1>Subscriptions</h1>
+    {% endif %}
     {% if users%}
     {% for user in users %}
         <div class="card">

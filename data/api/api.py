@@ -1,7 +1,7 @@
+from flask_login import login_required, current_user
 from flask_restful import reqparse, abort, Api, Resource
 from flask import jsonify
 import json
-
 from data.Models.blog_post import Posts
 from data.Models.users import User
 from data.Models.stats import Stats
@@ -32,27 +32,27 @@ class UsersResource(Resource):
     def get(self, user_id):
         db_sess = db_session.create_session()
         user = db_sess.query(User).get(user_id)
-        return jsonify({"posts": user.to_dict()})
+        return jsonify({"user": user.to_dict()})
 
 
 class UsersListResource(Resource):
     def get(self):
         db_sess = db_session.create_session()
         users = db_sess.query(User)
-        return jsonify({"posts": [user.to_dict() for user in users]})
+        return jsonify({"users": [user.to_dict() for user in users]})
 
 
 class StatsResource(Resource):
     def get(self, stat_id):
         db_sess = db_session.create_session()
         stat = db_sess.query(Stats).get(stat_id)
-        return jsonify({"posts": stat.to_dict()})
+        return jsonify({"stat": stat.to_dict()})
 
 
 class StatsListResource(Resource):
     def get(self):
         db_sess = db_session.create_session()
         stats = db_sess.query(Stats)
-        return jsonify({"posts": [stat.to_dict() for stat in stats]})
+        return jsonify({"stats": [stat.to_dict() for stat in stats]})
 
 

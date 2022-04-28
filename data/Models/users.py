@@ -2,6 +2,7 @@ import datetime
 import sqlalchemy
 from sqlalchemy import orm
 from sqlalchemy.orm import relationship
+from sqlalchemy_serializer import SerializerMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from data.Sql.db_session import SqlAlchemyBase
@@ -24,6 +25,7 @@ class User(SqlAlchemyBase, UserMixin):
     # User can Have Many Posts
     posts = relationship("Posts", backref="poster")  # poster.name
     subs = relationship('Subs')
+
     def repr(self):
         return f"{self.name} {self.surname}"
 
@@ -33,12 +35,11 @@ class User(SqlAlchemyBase, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
 
-    def to_dict(self, only=("name", "surname", "age", "email", "nickname")):
+    def to_dict(self, only=("name", "surname", "age", "email", "nickname", "modified_date")):
         data = {}
         for elem in only:
             data[elem] = self.__dict__[elem]
         return data
-
 
 
 '''from datetime import datetime
