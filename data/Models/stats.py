@@ -1,7 +1,6 @@
-import datetime
 import sqlalchemy
 from sqlalchemy import orm
-from .db_session import SqlAlchemyBase
+from data.Sql.db_session import SqlAlchemyBase
 
 
 class Stats(SqlAlchemyBase):
@@ -19,3 +18,11 @@ class Stats(SqlAlchemyBase):
     damage = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
 
     user = orm.relation('User')
+
+    def to_dict(self, only=("player_mail", "kills", "deaths", "rik", "hits", "fires", "damage")):
+        data = {}
+        for elem in only:
+            data[elem] = self.__dict__[elem]
+        return data
+
+

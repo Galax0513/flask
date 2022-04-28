@@ -2,15 +2,12 @@
 
 {% block content %}
 
-{% for message in get_flashed_messages() %}
-
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+{% if message %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-
-{% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
 
 {% if current_user.is_authenticated %}
 
@@ -41,20 +38,13 @@
         class="form-label") }}
         {{ form.address(class="form-control") }}
 
+        <br/>
+                        {{ form.files.label(
+        class="form-label") }}
+        {{ form.files(class="form-control") }}
 
         <br/>
-            <form method="post" action="/" enctype="multipart/form-data">
-        <dl>
-            <p>
-                <input type="file" name="file" class="form-control" autocomplete="off" required>
-            </p>
-        </dl>
-        <p>
-            <br/>
-              <form action="/add_post" method="post">
-     <input type="submit" name="add" value="add" class="btn btn-secondary">
-            </form>
-        </p>
+        {{ form.submit(class="submit", class="btn btn-secondary") }}
     </form>
 
 
@@ -65,6 +55,7 @@
     <p>Sorry, You must be logged in to access this page!</p>
 
     <a href="{{ url_for('login') }}">Login Here</a>
+</div>
 
 
 {% endif %}

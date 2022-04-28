@@ -4,17 +4,16 @@ import math, random
 import pygame
 import json
 import pygame as pg
-
+from PyQt5.QtGui import QIcon
+from win32api import GetSystemMetrics
 from time import sleep
 from requests import get
 
-from data import db_session
 from settings import SERVER_HOST, SERVER_PORT, SERVER_PORT_WEB
 import os
-from untitled import Ui_MainWindow
+from authorization.untitled import Ui_MainWindow
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5 import QtCore, QtGui, QtWidgets
-from untitled import Ui_MainWindow
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -45,6 +44,7 @@ class Example(QMainWindow, Ui_MainWindow):
         self.pushButton.clicked.connect(self.act)
         self.checkBox_3.stateChanged.connect(self.act2)
         self.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.setWindowIcon(QIcon("pictures/tank2.png"))
         remember_info = {}
         with open('remember.txt', mode='rt') as file:
             try:
@@ -62,7 +62,6 @@ class Example(QMainWindow, Ui_MainWindow):
                                   'login': self.lineEdit.text()}).encode())
             try:
                 info_start = json.loads(sock.recv(2 ** 20).decode())
-                sleep(0.5)
             except Exception:
                 info_start = {}
 
@@ -130,8 +129,10 @@ os.environ['SDL_VIDEO_CENTERED'] = '0'
 pg.init()
 screen = pg.Surface(SIZE)
 # screen2 = pg.display.set_mode(SIZE_WINDOW)
-SIZE_WINDOW = (1200, 800)
+SIZE_WINDOW = (GetSystemMetrics(0) / 2, GetSystemMetrics(1) / 2)
 screen2 = pygame.display.set_mode(SIZE_WINDOW)
+icon = pygame.image.load(os.path.join('pictures', 'tank2.png'))
+pygame.display.set_icon(icon)
 
 
 pg.display.set_caption('Tanks_online(epic)')
@@ -192,6 +193,9 @@ boom_sound3 = pygame.mixer.Sound('sounds/probitie-2.mp3')
 rik_sound1 = pygame.mixer.Sound('sounds/rikoshet.mp3')
 rik_sound2 = pygame.mixer.Sound('sounds/rikoshet1.mp3')
 game_over = pygame.mixer.Sound('sounds/tank-unichtozhen.mp3')
+pygame.mixer.music.load("sounds/wot-music-team-andrey-kulik-steel-hunter.mp3")
+pygame.mixer.music.set_volume(0.4)
+pygame.mixer.music.play()
 pojar = pygame.mixer.Sound('sounds/pojar.mp3')
 pojar_channel = pygame.mixer.Channel(0)
 
@@ -347,7 +351,9 @@ class Tank(pg.sprite.Sprite):  # класс танка
         self.time = time
         self.colision = False
         self.boom_sounds = pygame.mixer.Channel(1)
+        self.boom_sounds.set_volume(0.5)
         self.rik_sounds = pygame.mixer.Channel(2)
+        self.rik_sounds.set_volume(0.5)
         self.player_inf = {'pos': self.first_position,  # информация, идущая на сервер
                            'shoot': [None, None]}
 
@@ -502,7 +508,9 @@ class Patron(pg.sprite.Sprite):
                         self.number1 += 1
                         if dam >= 20:  # попадание по танку
                             boom_sound = boom_sound2 if random.randint(1, 2) == 2 else boom_sound3
-                            elem.boom_sounds.queue(boom_sound1), elem.boom_sounds.queue(boom_sound)  # звук взрыва
+                            elem.boom_sounds.queue(boom_sound1)
+                            if self.player_id == player_main.player:
+                                elem.boom_sounds.queue(boom_sound)  # звук взрыва
                             Boom(*self.rect.center)  # взрыв пули
                             self.kill()  # уничтожение пули
                             if random.randint(1, 10) == 1:  # c небольшой вероятностью вызывается пожар
@@ -512,7 +520,9 @@ class Patron(pg.sprite.Sprite):
                                 elem.time_delete_fire = 0
 
                         else:  # если произошел рикошет - меняем направление пули
-                            elem.rik_sounds.queue(rik_sound1), elem.rik_sounds.queue(rik_sound2)  # звук рикошета
+                            elem.rik_sounds.queue(rik_sound1)
+                            if self.player_id == player_main.player:
+                                elem.rik_sounds.queue(rik_sound2)  # звук рикошета
 
                             angle = self.angle_rik[self.number2 % 4]
                             self.number2 += 1
@@ -536,6 +546,7 @@ class Patron(pg.sprite.Sprite):
 
 
 pole = load_image('pole.jpg')  # загрузка изображения игрового поля
+
 
 game = True  # статус игры
 time_for_quit = 0
