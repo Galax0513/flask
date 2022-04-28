@@ -19,7 +19,7 @@ function init() {
 
     myMap.geoObjects
         .add(new ymaps.Placemark([{{point.split(",")[1]}}, {{point.split(",")[0]}}], {
-            balloonContent: '{% for user in points[point] %}<a class="navbar-brend" href="/dashboard/{{points[point][user][2]}}/0">{{user}}</a>: {{points[point][user][1]}}, <a class="navbar-brend" href="/post/{{points[point][user][0]}}"=>Подробнее</a><br>{% endfor %}',
+            balloonContent: '{% for user in points[point] %}<a class="navbar-brend" href="/dashboard/{% if points[point][user][2] != None%}{{points[point][user][2]}}{%else%}0{%endif%}/0">{{user}}{% if current_user.id == points[point][user][2]%}(you){% endif %}</a>: {{points[point][user][1]}}, <a class="navbar-brend" href="/post/{{points[point][user][0]}}"=>more</a><br>{% endfor %}',
         }, {
             preset: 'islands#icon',
             iconColor: '#0095b6'

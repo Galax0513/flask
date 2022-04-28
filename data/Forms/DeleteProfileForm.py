@@ -4,6 +4,6 @@ from wtforms.validators import DataRequired, Length, EqualTo, Email
 
 
 class DeleteProfileForm(FlaskForm):
-    password = PasswordField('Password', validators=[DataRequired('Enter your password')])
-    password_again = PasswordField('Confirm password', validators=[DataRequired()])
-    submit = SubmitField('Delete')
+    password = PasswordField('Password', validators=[DataRequired('Enter password')])
+    password_again = PasswordField('Password again', validators=[DataRequired()])
+    submit = SubmitField('Delete profile')

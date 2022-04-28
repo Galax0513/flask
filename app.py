@@ -10,6 +10,7 @@ from flask import Flask, render_template, redirect, url_for
 from turbo_flask import Turbo
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 
+from data.Models.comments import Comments
 from data.Models.subscribers import Subs
 from settings import SERVER_PORT_WEB
 from data.api.api import GetPos, PostsResource, PostsListResource, UsersListResource, StatsResource, \
@@ -39,11 +40,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'error_login'
 
-
-def ret_login_manager():
-    return login_manager
-
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 sock.connect((SERVER_HOST, int(SERVER_PORT)))
@@ -70,6 +66,12 @@ def login_error(error):
 @app.route("/need_to_login")
 def error_login():
     return render_template('error.html', error=f"Must Be Logged In...")
+
+
+@app.route("/")
+@app.route("/main")
+def comments():
+    return render_template("main.html")
 
 
 @app.route("/map")
@@ -112,10 +114,11 @@ def map_new():
             nickname = 'deleted_user'
             if post.poster and post.poster.nickname:
                 nickname = post.poster.nickname
-            if post.coords in points:
-                points[post.coords][nickname] = [post.id, post.title, post.poster_id]
-            else:
-                points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
+            if post.coords != 'error':
+                if post.coords in points:
+                    points[post.coords][nickname] = [post.id, post.title, post.poster_id]
+                else:
+                    points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
     return render_template("test_map_java.html", points=points, size=['100%', "600px"],
                            zoom=2, center=[55.76, 37.64])
 
@@ -150,11 +153,12 @@ def dashboard(delete_user, user_id):
     form2 = DeleteProfileForm()
     user = db_sess.query(User).filter(User.id == user_id).first()
     subscribity = True
-    for sub in user.subs:
-        if sub.subscriber == current_user.id:
-            subscribity = False
     # добавляем с формы в ьазу данных
     if user:
+        for sub in user.subs:
+            if sub.subscriber == current_user.id:
+                subscribity = False
+                break
         if form1.validate_on_submit():
             if current_user.id == user.id:
                 file = form1.file.data
@@ -163,7 +167,7 @@ def dashboard(delete_user, user_id):
                         return render_template(
                             "dashboard.html",
                             message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"])}',
-                            form=form1, user=user, subscribity=subscribity)
+                            form=form1, user=user, subscribity=subscribity, subs=len(user.subs))
                     file_name = f'{app.config["UPLOAD_FOLDER_AVATAR"]}{datetime.datetime.now().date()}_{datetime.datetime.now().timestamp()}.{file.filename.split(".")[-1]}'
                     file.save(file_name)
                     user.avatar = file_name
@@ -174,13 +178,14 @@ def dashboard(delete_user, user_id):
                     db_sess.commit()
                     # flash("User Updated")
                     return render_template("dashboard.html", form=form1,
-                                           user=user, message="User Updated", subscribity=subscribity)
+                                           user=user, message="User Updated", subscribity=subscribity,
+                                           subs=len(user.subs))
                 except:
                     # flash("Error! Looks like there was a problem... Try again!")
                     return render_template("dashboard.html", form=form1,
                                            user=user,
                                            message="Error! Looks like there was a problem... Try again!",
-                                           subscribity=subscribity)
+                                           subscribity=subscribity, subs=len(user.subs))
             else:
                 # flash("You dumb beach!")
                 return render_template("error.html", error="you are not this user")
@@ -191,13 +196,13 @@ def dashboard(delete_user, user_id):
                 # flash("Пароли не совпадают")
                 return render_template("dashboard.html", form=form1, form2=form2,
                                        user=user,
-                                       message="Пароли не совпадают", subscribity=subscribity)
+                                       message="Пароли не совпадают", subscribity=subscribity, subs=len(user.subs))
         else:
             if delete_user:
                 return render_template("dashboard.html", form=form1,
-                                       user=user, form2=form2, subscribity=subscribity)
+                                       user=user, form2=form2, subscribity=subscribity, subs=len(user.subs))
             return render_template("dashboard.html", form=form1,
-                                   user=user, subscribity=subscribity)
+                                   user=user, subscribity=subscribity, subs=len(user.subs))
     return render_template("error.html", error="This user do not exist")
 
 
@@ -286,7 +291,8 @@ def posts(cond_sub):
                                             Posts.title.like(f"%{form.search.data}%")).all()
         if cond_sub:
             posts = db_sess.query(Posts).filter(((Posts.title == form.search.data.lower()) |
-                                 Posts.title.like(f"%{form.search.data}%")) & Posts.poster_id.in_(subs)).all()
+                                                 Posts.title.like(f"%{form.search.data}%")) & Posts.poster_id.in_(
+                subs)).all()
         if posts:
             return render_template("posts.html",
                                    posts=posts, form=form, cond_sub=cond_sub)
@@ -301,7 +307,6 @@ def posts(cond_sub):
 @login_required
 def add_post():
     form = PostForm()
-
     if form.validate_on_submit():
         poster = current_user.id
         from data.api.yandex_api_func import coords
@@ -333,32 +338,45 @@ def add_post():
         # Return a Message
         # flash("Blog Post Submitted Successfully!")
 
-        return redirect(f"posts/{post.id}")
+        return redirect(f"post/{post.id}")
 
     # Redirect to the webpage
     return render_template("add_post.html", form=form)
 
 
 # возвращает обратно к посту
-@app.route('/post/<int:id>')
+@app.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
+    form = SearchForm()
     post = db_sess.query(Posts).get(id)
-    if post.coords:
-        coords = [float(coord) for coord in post.coords.split(',')][-1::-1]
-    post_files = []
-    for file in post.files.split("|"):
-        if os.path.exists(file):
-            post_files.append(file)
+    comments = db_sess.query(Comments).all()
+    if post:
+        if form.validate_on_submit():
+            comment = Comments(content=form.search.data,
+                               user_id=post.poster_id,
+                               post_id=id)
+            db_sess.add(comment)
+            db_sess.commit()
+        if not post.coords == "error":
+            coords = [float(coord) for coord in post.coords.split(',')][-1::-1]
         else:
-            post_files.append(app.config["UPLOAD_FOLDER"] + "image_not_found.png")
-    points = {}
-    if post.coords:
-        nickname = 'deleted_user'
-        if post.poster and post.poster.nickname:
-            nickname = post.poster.nickname
+            coords = [60, 100]
+        post_files = []
+        for file in post.files.split("|"):
+            if os.path.exists(file):
+                post_files.append(file)
+            else:
+                post_files.append(app.config["UPLOAD_FOLDER"] + "image_not_found.png")
+        points = {}
+        if post.coords:
+            nickname = 'deleted_user'
+            if post.poster and post.poster.nickname:
+                nickname = post.poster.nickname
 
-        points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
-    return render_template('post.html', post=post, points=points, center=coords, size=["100%", "400px"], zoom=8, post_files=post_files)
+            points[post.coords] = {nickname: [post.id, post.title, post.poster_id]}
+        return render_template('post.html', post=post, points=points, center=coords, size=["100%", "400px"],
+                               zoom=8, post_files=post_files, form=form, comments=comments)
+    return render_template("error.html", error="Post do not exist")
 
 
 @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
@@ -390,7 +408,7 @@ def edit_post(id):
         db_sess.merge(post)
         db_sess.commit()
         # flash("Post has been updated")
-        return redirect(url_for('posts', id=post.id))
+        return redirect(url_for('post', id=post.id))
     form.title.data = post.title
     form.slug.data = post.slug
     form.content.data = post.content
@@ -408,7 +426,7 @@ def delete_post(id):
             db_sess.delete(post_to_delete)
             db_sess.commit()
             # flash("Blog Post was deleted!")
-            return redirect("/posts")
+            return redirect("/posts/0")
 
         except:
             # flash("WHoops! There was a problem... Try again")
@@ -501,12 +519,13 @@ def update(id):
             except:
                 # flash("Error! Looks like there was a problem... Try again!")
                 return render_template("update.html", form=form,
-                                       name_to_update=name_to_update, message="Error! Looks like there was a problem... Try again!")
+                                       name_to_update=name_to_update,
+                                       message="Error! Looks like there was a problem... Try again!")
         else:
             # flash("You dumb beach!")
-            return render_template("error.html", error="You are not this user")
+            return render_template("error.html", error="you are not this user")
     return render_template("update.html", form=form,
-                               name_to_update=name_to_update,id=id)
+                           name_to_update=name_to_update, id=id)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -515,23 +534,23 @@ def reqister():
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
             # flash("Пароли не совпадают")
-            return render_template('register.html', title='Registration',
-                                   form=form, message="Passwords do not match")
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Пароли не совпадают")
         if db_sess.query(User).filter(User.email == form.email.data).first():
             # flash("Такой пользователь уже есть")
-            return render_template('register.html', title='Registration',
-                                   form=form, message="This user already exists")
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Такой пользователь уже есть")
         if db_sess.query(User).filter(User.nickname == form.nickname.data).first():
             # flash("Никнейм уже занят")
-            return render_template('register.html', title='Registration',
-                                   form=form, message="Nickname already taken")
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Никнейм уже занят")
 
         file = form.file.data
         file_name = ''
         if file:
             if file.filename.split(".")[-1] not in app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"]:
                 return render_template(
-                    "add_post.html",
+                    "register.html",
                     message=f'Разрешенные форматы: {" ".join(app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"])}',
                     form=form
                 )
@@ -553,7 +572,6 @@ def reqister():
     return render_template('register.html', title='Регистрация', form=form)
 
 
-@app.route("/")
 @app.route("/players")
 def index():
     return render_template("players.html")

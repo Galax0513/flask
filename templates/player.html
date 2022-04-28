@@ -5,7 +5,7 @@
 <img align="left" class="img-thumbnail" width="190px" height="190px" src="{% if user.avatar%}/{{user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}">
 <div class="list-group">
   <button type="button" class="list-group-item list-group-item-action active" aria-current="true">
-    <h1>{{user.nickname}}</h1>
+    <h1>{{user.nickname}}{% if current_user.id == user.id %}(you){% endif %}</h1>
   </button>
     <table class="table">
        <thead>

@@ -3,15 +3,15 @@
                 <thead>
                 <tr class="table-secondary">
                     <th scope="col">#</th>
-                    <th scope="col">Пользователь</th>
-                    <th scope="col">Здоровье</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Health</th>
                     <th scope="col">K/D</th>
-                    <th scope="col">Убийства</th>
-                    <th scope="col">Смерти</th>
-                    <th scope="col">Попадания</th>
-                    <th scope="col">Рикошеты</th>
-                    <th scope="col">Урона нанесено</th>
-                    <th scope="col">Вызвано пожаров</th>
+                    <th scope="col">Kills</th>
+                    <th scope="col">Deaths</th>
+                    <th scope="col">Hits</th>
+                    <th scope="col">Ricochets</th>
+                    <th scope="col">Damage</th>
+                    <th scope="col">Сaused fires</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -40,7 +40,7 @@
                     {% endfor %}
                     {% if not info%}
                     <tr class="table-primary">
-                        <th colspan="10" align="center">Пока никто не зашел в игру</th>
+                        <th colspan="10" align="center">No one has logged into the game yet</th>
                     </tr>
                     {% endif%}
 

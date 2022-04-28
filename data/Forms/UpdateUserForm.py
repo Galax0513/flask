@@ -8,4 +8,4 @@ class UpdateUserForm(FlaskForm):
     name = StringField('First name', validators=[DataRequired('Enter your name')])
     surname = StringField('Last name')
     file = FileField("Change the photo of profile")
-    submit = SubmitField('Submit')
+    submit = SubmitField('Update')

@@ -28,6 +28,9 @@
     {% endif %}
     <a href="{{ url_for('posts', cond_sub=0) }}" class="btn btn-outline-secondary btn-sm">Back to Blog</a>
 </div>
+<h2>Comments</h2>
+{% include "comments.html" %}
+<br>
 <h2>Galary</h2>
 {% if post.files %}
 <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">

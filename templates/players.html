@@ -4,8 +4,8 @@
 {{ turbo() }}
 
 <div class="btn-group" role="group" aria-label="Basic example">
-            <a type="button" class="btn btn-outline-primary" href="/">Пользователи в игре</a>
-            <a type="button" class="btn btn-outline-primary" href="/info">Информация</a>
+            <a type="button" class="btn btn-outline-primary" href="/">Players in game</a>
+            <a type="button" class="btn btn-outline-primary" href="/info">Information</a>
 </div>
 <h1 align="left">Players in game</h1>
 {%if current_user.is_authenticated%}
@@ -14,14 +14,15 @@
             <thead>
                 <tr class="table-secondary">
                     <th scope="col">#</th>
-                    <th scope="col">Пользователь</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Health</th>
                     <th scope="col">K/D</th>
-                    <th scope="col">Убийства</th>
-                    <th scope="col">Смерти</th>
-                    <th scope="col">Попадания</th>
-                    <th scope="col">Рикошеты</th>
-                    <th scope="col">Урона нанесено</th>
-                    <th scope="col">Вызвано пожаров</th>
+                    <th scope="col">Kills</th>
+                    <th scope="col">Deaths</th>
+                    <th scope="col">Hits</th>
+                    <th scope="col">Ricochets</th>
+                    <th scope="col">Damage</th>
+                    <th scope="col">Сaused fires</th>
                 </tr>
             </thead>
         </table>
@@ -33,7 +34,7 @@
 <table class="table">
                 <thead>
                 <tr class="table-secondary">
-                    <th scope="col" align="center">Статистика матча доступна только авторизованным пользователям</th>
+                    <th scope="col" align="center">Match statistics are only available to authorized users</th>
                 </tr>
                 </thead>
           </table>
