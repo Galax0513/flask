@@ -1,47 +1,53 @@
 {% extends 'base.html'%}
 
 {% block content %}
-<script type="text/javascript">
-if (window.location.href.indexOf('reload')==-1) {
-    window.location.replace(window.location.href+'?reload');
-}
-</script>
-
-{% for message in get_flashed_messages() %}
-
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+{% if message %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-
-{% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+{% endif %}
 
 
 <form action="" method="post">
+    {{form.csrf_token}}
     <p>{{ form.search(class="form-control")}}</p>
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }} <a type="button" class="btn btn-outline-primary" href="/map_new">На карте</a></p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}
+    <a type="button" class="btn btn-primary" href="/posts/0">Clear</a>
+        <a type="button" class="btn btn-secondary" href="/posts/1">Subscriptions only</a>
+    <a type="button" class="btn btn-outline-primary" href="/map_new">On map</a></p>
+
 
 </form>
-    {% if posts%}
-{% for post in posts %}
-
-<div class="shadow p-3 mb-5 bg-body rounded">
-    <h2 ><a href="{{ url_for('post', id=post.id) }}" >{{post.title}}</a> </h2><br/>
-    <small>By: {{ post.poster.nickname }}<br/>
-        {{post.date_posted }} | {{post.slug }}</small><br/>
-    {{post.content }}
-    <br/>
-    <br/>
-    <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
-        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">DELETE</a>
+<div id="search">
+    {% if cond_sub %}
+    <h1>Subscriptions</h1>
+    {% endif %}
+    {% if posts %}
+    {% for post in posts %}
+    <div class="shadow p-3 mb-5 bg-body rounded">
+        <h2><a href="{{ url_for('post', id=post.id) }}">{{post.title}}</a></h2>
+        <small>
+            <strong><img usemap="#workmap{{post.poster.id}}" class="rounded-circle" width="30px" height="30px" src="{% if post.poster.avatar%}/{{post.poster.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {%if post.poster.nickname%}{{post.poster.nickname}}{% else %}deleted_user {% endif%}</strong>
+            <map name="workmap{{post.poster.id}}">
+                <area shape="circle" coords="15,15,15" href="/dashboard/{% if post.poster.id %}{{post.poster.id}}{% else %}0{% endif %}/0">
+            </map>
+            <br/>
+            {{post.date_posted.date() }} | {{post.slug }}</small><br/>
+        {{post.content }}
+        <br/>
+        {% if current_user.id == post.poster_id %}
+            <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
+            <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">DELETE</a>
+        {% endif %}
     </div>
 
 
-{% endfor %}
-{% else %}
- <div class="alert alert-primary" role="alert">
-     Посты отсутствуют
- </div>
-{% endif %}
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-primary" role="alert">
+        Посты отсутствуют
+    </div>
+    {% endif %}
+</div>
 {% endblock%}

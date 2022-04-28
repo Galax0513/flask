@@ -7,12 +7,13 @@ import random
 import pygame.sprite
 import math
 
+
+from data.Models.users import User
+from data.Models.stats import Stats
+from data.Models.blog_post import Posts
+
+from data.Sql import db_session
 from settings import SERVER_HOST, SERVER_PORT
-from data.users import User
-from data.stats import Stats
-
-from data import db_session
-
 import os
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"  # на сервере нет дисплея
@@ -513,6 +514,8 @@ while running:
             login_or_inform = json.loads(info.decode())
             if 'login' in login_or_inform:
                 user = db_sess.query(User).filter(User.email == login_or_inform['login']).first()
+                print(db_sess.query(User).all())
+                print(user)
                 if user and user.check_password(login_or_inform['password']):
                     if login_or_inform['login'] not in get_all_logins(players):
                         if len(players_inf.values()) < MAX_PLAYERS:

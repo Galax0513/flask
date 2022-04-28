@@ -1,39 +1,4 @@
 {% extends "base.html" %}
 {% block content %}
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title>Быстрый старт. Размещение интерактивной карты на странице</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&lang=ru_RU" type="text/javascript">
-    </script>
-    <script type="text/javascript">
-        ymaps.ready(init);
-
-function init() {
-    var myMap = new ymaps.Map("map", {
-            center: [55.76, 37.64],
-            zoom: 1
-        }, {
-            searchControlProvider: 'yandex#search'
-        });
-
-    {% for post in posts %}
-    myMap.geoObjects
-        .add(new ymaps.Placemark([{{post.coords.split(",")[1]}}, {{post.coords.split(",")[0]}}], {
-            balloonContent: '{{post.poster.nickname}}: {{post.title}}, <a href="posts/{{post.id}}">Подробнее</a>'
-        }, {
-            preset: 'islands#icon',
-            iconColor: '#0095b6'
-        }));
-    {% endfor %}
-}
-
-    </script>
-</head>
-
-<body>
-    <div id="map" style="width: 100%; height: 600px"></div>
-</body>
-
-</html>
+{% include "map_java.html"%}
 {% endblock %}

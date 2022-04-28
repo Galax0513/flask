@@ -2,15 +2,12 @@
 
 {% block content %}
 
-{% for message in get_flashed_messages() %}
-
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+{% if message %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-
-{% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
 
 {% if current_user.is_authenticated %}
 
@@ -42,12 +39,13 @@
         {{ form.address(class="form-control") }}
 
         <br/>
-                        {{ form.img.label(
+                        {{ form.files.label(
         class="form-label") }}
-        {{ form.img(class="form-control") }}
+        {{ form.files(class="form-control") }}
 
         <br/>
         {{ form.submit(class="submit", class="btn btn-secondary") }}
+    </form>
 
 
 
@@ -57,6 +55,7 @@
     <p>Sorry, You must be logged in to access this page!</p>
 
     <a href="{{ url_for('login') }}">Login Here</a>
+</div>
 
 
 {% endif %}
