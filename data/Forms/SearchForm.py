@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Length, EqualTo, Email
 
 class SearchForm(FlaskForm):
     search = StringField(
-        "Поиск",
+        "Search",
         validators=[DataRequired()]
     )
     submit = SubmitField("Search")

@@ -7,6 +7,6 @@ from wtforms.widgets import TextArea
 class EditPostForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
     content = StringField("Content", validators=[DataRequired()], widget=TextArea())
-    slug = StringField("Slug", validators=[DataRequired()])
-    files = MultipleFileField("Фотографии")
+    slug = StringField("Theme", validators=[DataRequired()])
+    files = MultipleFileField("Photos")
     submit = SubmitField('Submit')

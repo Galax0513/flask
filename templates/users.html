@@ -30,7 +30,7 @@
                 <div class="card-header">
                         <strong><img usemap="#workmap{{user.id}}" class="rounded-circle" width="30px" height="30px"
                                      src="{% if user.avatar%}/{{user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}">
-                                {%if user.nickname%}{{user.nickname}}{% else %}deleted_user {% endif%}</strong>
+                                {%if user.nickname%}{{user.nickname}}{% if current_user.id == user.id%}(you){% endif %}{% else %}deleted_user {% endif%}</strong>
                     <map name="workmap{{user.id}}">
                         <area shape="circle" coords="15,15,15"
                               href="/dashboard/{% if user.id %}{{user.id}}{% else %}0{% endif %}/0">
@@ -48,7 +48,8 @@
                                 <strong>Name: </strong>{{user.name}}<br/>
                                 <strong>Surname: </strong>{{user.surname}}<br/>
                                 <strong>Age: </strong>{{user.age}}<br/>
-                                <a href="/player/{{current_user.id}}"><strong>Game profile</strong></a><br/>
+                                <strong>Subscribers </strong>{% if user.subs %} {% for sub in user.subs %}{% if loop.index0 == 0 %} {{ loop.length }}{% endif %} {% endfor %}{% else %}0{% endif %}<br/>
+                                <a href="/player/{{user.id}}"><strong>Game profile</strong></a><br/>
                         </p>
                 </div>
         </div>

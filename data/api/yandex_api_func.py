@@ -17,10 +17,13 @@ def coords(toponym_to_find):
 
     # Преобразуем ответ в json-объект
     json_response = response.json()
-    # Получаем первый топоним из ответа геокодера.
-    toponym = json_response["response"]["GeoObjectCollection"][
-        "featureMember"][0]["GeoObject"]
-    # Координаты центра топонима:
-    toponym_coodrinates = toponym["Point"]["pos"]
-    # Долгота и широта:
-    return ','.join(toponym_coodrinates.split(" "))
+    try:
+        # Получаем первый топоним из ответа геокодера.
+        toponym = json_response["response"]["GeoObjectCollection"][
+            "featureMember"][0]["GeoObject"]
+        # Координаты центра топонима:
+        toponym_coodrinates = toponym["Point"]["pos"]
+        # Долгота и широта:
+        return ','.join(toponym_coodrinates.split(" "))
+    except Exception:
+        return 'error'

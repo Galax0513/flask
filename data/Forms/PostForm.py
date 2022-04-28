@@ -10,5 +10,5 @@ class PostForm(FlaskForm):
     content = StringField("Content", validators=[DataRequired()], widget=TextArea())
     slug = StringField("Theme", validators=[DataRequired()])
     address = StringField("Address", validators=[DataRequired()])
-    files = MultipleFileField("Фотографии")
+    files = MultipleFileField("Photos")
     submit = SubmitField('Submit')

@@ -28,7 +28,7 @@
     <div class="shadow p-3 mb-5 bg-body rounded">
         <h2><a href="{{ url_for('post', id=post.id) }}">{{post.title}}</a></h2>
         <small>
-            <strong><img usemap="#workmap{{post.poster.id}}" class="rounded-circle" width="30px" height="30px" src="{% if post.poster.avatar%}/{{post.poster.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {%if post.poster.nickname%}{{post.poster.nickname}}{% else %}deleted_user {% endif%}</strong>
+            <strong><img usemap="#workmap{{post.poster.id}}" class="rounded-circle" width="30px" height="30px" src="{% if post.poster.avatar%}/{{post.poster.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}"> {%if post.poster.nickname%}{{post.poster.nickname}}{% if current_user.id == post.poster.id%}(you){% endif %}{% else %}deleted_user {% endif%}</strong>
             <map name="workmap{{post.poster.id}}">
                 <area shape="circle" coords="15,15,15" href="/dashboard/{% if post.poster.id %}{{post.poster.id}}{% else %}0{% endif %}/0">
             </map>
@@ -46,7 +46,7 @@
     {% endfor %}
     {% else %}
     <div class="alert alert-primary" role="alert">
-        Посты отсутствуют
+        There are no posts
     </div>
     {% endif %}
 </div>

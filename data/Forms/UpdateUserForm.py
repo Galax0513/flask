@@ -4,8 +4,8 @@ from wtforms.validators import DataRequired, Length, Email
 
 
 class UpdateUserForm(FlaskForm):
-    email = EmailField('Почта', validators=[DataRequired('Введите почту'), Email('Некорректная почта')])
-    name = StringField('Имя пользователя', validators=[DataRequired('Введите почту')])
-    surname = StringField('Фамилия пользователя')
-    file = FileField("Изменить аватар")
-    submit = SubmitField('Обновить')
+    email = EmailField('Mail', validators=[DataRequired('Введите почту'), Email('Некорректная почта')])
+    name = StringField('Name', validators=[DataRequired('Введите почту')])
+    surname = StringField('Surname')
+    file = FileField("Change avatar")
+    submit = SubmitField('Update')

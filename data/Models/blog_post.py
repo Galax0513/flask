@@ -1,5 +1,6 @@
 from datetime import datetime
 import sqlalchemy
+from sqlalchemy.orm import relationship
 
 from data.Sql.db_session import SqlAlchemyBase
 
