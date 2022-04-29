@@ -4,7 +4,7 @@ import os
 import threading
 import socket
 from time import sleep
-
+from flask_ngrok import run_with_ngrok
 import requests
 from flask import Flask, render_template, redirect, url_for
 from turbo_flask import Turbo
@@ -35,6 +35,7 @@ app.config["UPLOAD_FOLDER"] = r"static/posts_files/"
 app.config["UPLOAD_FOLDER_AVATAR"] = r"static/avatars/"
 app.config["ALLOWED_FILE_EXTENSIONS"] = ["png", "jpg", "jpeg", "gif", "mp4", "avi", "mov"]
 app.config["ALLOWED_FILE_EXTENSIONS_AVATAR"] = ["png", "jpg", "jpeg", "gif"]
+run_with_ngrok(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -156,7 +157,7 @@ def dashboard(delete_user, user_id):
     # добавляем с формы в ьазу данных
     if user:
         for sub in user.subs:
-            if sub.subscriber == current_user.id:
+            if not current_user.is_authenticated or sub.subscriber == current_user.id:
                 subscribity = False
                 break
         if form1.validate_on_submit():
@@ -352,11 +353,15 @@ def post(id):
     comments = db_sess.query(Comments).all()
     if post:
         if form.validate_on_submit():
-            comment = Comments(content=form.search.data,
-                               user_id=post.poster_id,
-                               post_id=id)
-            db_sess.add(comment)
-            db_sess.commit()
+            if current_user.is_authenticated:
+                comment = Comments(content=form.search.data,
+                                   user_id=current_user.id,
+                                   post_id=id)
+                db_sess.add(comment)
+                db_sess.commit()
+                return redirect(url_for("post", id=post.id))
+            else:
+                return redirect("/need_to_login")
         if not post.coords == "error":
             coords = [float(coord) for coord in post.coords.split(',')][-1::-1]
         else:
@@ -607,7 +612,8 @@ def page_not_found(e):
 
 
 def main():
-    app.run(host=SERVER_HOST, port=int(SERVER_PORT_WEB))
+    app.run()
+    # app.run(host=SERVER_HOST, port=int(SERVER_PORT_WEB))
 
 
 if __name__ == '__main__':

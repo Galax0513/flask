@@ -9,7 +9,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between">
               <div class="d-flex flex-row align-items-center">
-                <img src="{% if post.poster.avatar%}/{{post.poster.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}" alt="avatar" width="25"
+                <img src="{% if comment.user.avatar%}/{{comment.user.avatar}}{% else %}https://ob-kassa.ru/content/front/buhoskol_tmp1/images/reviews-icon.jpg{% endif %}" alt="avatar" width="25"
                   height="25" />
                 <p class="small mb-0 ms-2"><strong>{%if comment.user.nickname%}{{comment.user.nickname}}{% if
                   current_user.id == comment.user.id%}(you){% endif %}{% else %}deleted_user {% endif%}</strong></p>
@@ -27,7 +27,7 @@
         {% endfor %}
         <form action="" method="post">
           {{form.csrf_token}}
-          <p>{{ form.search(class="form-control")}}</p>
+          <p>{{ form.search(class="form-control", value="")}}</p>
           <p>{{ form.submit(type="submit", class="btn btn-primary", value="Comment") }}
         </form>
 
