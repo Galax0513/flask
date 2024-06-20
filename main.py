@@ -19,7 +19,7 @@ from data.api import GetPos
 from data import db_session
 from data.blog_post import Posts
 from forms.forms import RegisterForm as UserForm, LoginForm, RegisterForm, PostForm
-from settings import SERVER_HOST, SERVER_PORT
+#from settings import SERVER_HOST, SERVER_PORT
 from data.stats import Stats
 from data.users import User
 from flask_restful import reqparse, abort, Api, Resource
@@ -32,9 +32,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-sock.connect((SERVER_HOST, int(SERVER_PORT)))
+#sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+#sock.connect((SERVER_HOST, int(SERVER_PORT)))
 api = Api(app)
 api.add_resource(GetPos, '/api/getpos')
 turbo = Turbo(app)
@@ -381,8 +381,7 @@ def main():
                                passed=passed,
                                form=form)
 
-
-    app.run()
+    app.run(port=5001)
     # app.run(host=SERVER_HOST, port=int(SERVER_PORT_WEB))
 
 
